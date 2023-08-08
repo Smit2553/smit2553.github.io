@@ -53,20 +53,11 @@ main {
 }
 
 #about {
-  padding: 2rem;
   background-color: #f9f9f9;
+  padding: 1rem;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#about h2 {
-  font-size: 1.8rem;
   margin-bottom: 1rem;
-}
-
-#about p {
-  font-size: 1.2rem;
-  line-height: 1.6;
 }
 
 section {
