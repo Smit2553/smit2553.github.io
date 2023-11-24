@@ -1,41 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smit's Portfolio</title>
     <link rel="icon" href="assets/favicon.png" type="image/x-icon" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-  </head>
-  <body>
-    <header>
-      <div class="profile-pic">
-        <a href="smit2553.github.io">
-          <img src="assets/profile-picture.jpg" alt="Profile Picture" />
-        </a>
-      </div>
-      <div class="profile-info">
-        <a href="smit2553.github.io">
-          <h1>Smit Devrukhkar</h1>
-        </a>
-        <p>Computer Science Student</p>
-      </div>
-      <nav>
-        <ul>
-          <li><a href="#about">About</a></li>
-          <li><a href="#education">Education</a></li>
-          <li><a href="#experiences">Experiences</a></li>
-          <li><a href="#skills">Skills</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#contacts">Contacts</a></li>
-        </ul>
-      </nav>
+</head>
+<body>
+    <header class="header">
+        <div class="profile-pic">
+            <a href="smit2553.github.io">
+                <img src="assets/profile-picture.jpg" alt="Profile Picture" />
+            </a>
+        </div>
+        <div class="profile-info">
+            <a href="smit2553.github.io">
+                <h1>Smit Devrukhkar</h1>
+            </a>
+            <p>Computer Science Student</p>
+        </div>
+        <nav class="nav">
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#experiences">Experiences</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#contacts">Contacts</a></li>
+            </ul>
+        </nav>
     </header>
-    <main>
-      <h2>About Me</h2>
-      <section id="about">
-        <p>
+
+    <main class="main">
+        <section class="main__section">
+            <h2>About Me</h2>
+            <div id="about" class="main__content">
+                <!-- ... About Me content ... -->
+				<p>
           I am Smit Devrukhkar, a highly motivated and ambitious individual with
           a strong passion for computer science. Currently pursuing a BS in
           Computer Science at Arizona State University, I am on track to
@@ -67,10 +70,14 @@
           and deadline management come naturally to me, allowing me to thrive in
           fast-paced environments.
         </p>
-      </section>
-      <h2>Education</h2>
-      <section id="education">
-        <div class="timeline">
+            </div>
+        </section>
+
+        <section class="main__section">
+            <h2>Education</h2>
+            <div id="education" class="main__content">
+                <!-- ... Education content ... -->
+				<div class="timeline">
           <div class="timeline__component">
             <div class="timeline__date timeline__date--right">
               April 2009 - April 2021
@@ -120,13 +127,14 @@
             <span id="weatherInfo3">[Weather Info 1]</span>
             
           </div>
-          
-      </section>
+            </div>
+        </section>
 
-      <section id="experiences">
-        <h2>Experience</h2>
-        <div class="experience">
-            <h3>Volunteer at PyBay | San Francisco, CA</h3>
+        <section class="main__section">
+            <h2>Experience</h2>
+            <div id="experiences" class="main__content">
+                <!-- ... Experience content ... -->
+				<h3>Volunteer at PyBay | San Francisco, CA</h3>
             <ul>
                 <li>Annual conference for Python enthusiasts, bringing together developers, researchers, and industry professionals</li>
                 <li>Managing and coordinating PyBay's social media presence on Twitter</li>
@@ -161,13 +169,14 @@
               <li>Deployment of Self-Ordering kiosks at 3 shopping malls in Dubai</li>
               <li>Build E-Commerce packaging kiosks at Teir 1 Retailer warehouses in UAE</li>
           </ul>
-      </div>
-    </section>
-    
-      <section id="skills">
-        <h2>Skills</h2>
-        <div class="skill">
-            <h3>Programming Languages</h3>
+            </div>
+        </section>
+
+        <section class="main__section">
+            <h2>Skills</h2>
+            <div id="skills" class="main__content">
+                <!-- ... Skills content ... -->
+				<h3>Programming Languages</h3>
             <ul>
                 <li>Python</li>
                 <li>C++</li>
@@ -198,21 +207,24 @@
                 <li>Linux Administration</li>
                 <li>Network Administration</li>
             </ul>
-        </div>
-    </section>
-    
-      <section id="projects">
-        <h2>Projects</h2>
-        <div class="project">
-          <h3>Dialogue Social</h3>
+            </div>
+        </section>
+
+        <section class="main__section">
+            <h2>Projects</h2>
+            <div id="projects" class="main__content">
+                <!-- ... Projects content ... -->
+				<h3>Dialogue Social</h3>
           <p>This is a social media app that I have been working on for a bit. It is intened to be a mix between shortform and longform content.</p>
           <p>It is currently in development and is being built using the Flutter framework.</p>
           <a href="https://github.com/Smit2553/dialogue-social">View Project</a>
-        </div>
-      </section>
-      <h2>Contacts</h2>
-      <section id="contacts">
-        <div class="contact">
+            </div>
+        </section>
+
+        <h2>Contacts</h2>
+        <section id="contacts" class="main__section">
+            <!-- ... Contacts content ... -->
+			<div class="contact">
           <h3>Email:</h3>
           <a href="mailto:smitdev3@gmail.com"> smitdev3@gmail.com </a>
         </div>
@@ -222,19 +234,21 @@
             >Smit Devrukhkar's Linkedin</a
           >
         </div>
-      </section>
+        </section>
     </main>
+
     <script src="script.js"></script>
+
     <a href="#top" id="back-to-top" title="Back to Top">
         <i class="fas fa-arrow-up"></i>
     </a>
-  </body>
-  <footer>
-    <div class="social-icons">
-        <a href="https://github.com/Smit2553/" target="_blank" rel="noopener noreferrer">
-            <i class="fab fa-github"></i>
-        </a>
-    </div>
-</footer>
 
+    <footer class="footer">
+        <div class="social-icons">
+            <a href="https://github.com/Smit2553/" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+            </a>
+        </div>
+    </footer>
+</body>
 </html>
