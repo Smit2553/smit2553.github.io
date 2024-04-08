@@ -1,46 +1,36 @@
-# My Portfolio Website
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-This is my personal portfolio website showcasing my skills, projects, and contact information. The website is built using HTML, CSS, and JavaScript to create an interactive and modern user experience.
+## Getting Started
 
-## Table of Contents
+First, run the development server:
 
-- [Features](#features)
-- [Demo](#demo)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-## Features
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- Interactive navigation menu
-- Sections for About Me, Education, Skills, Projects, Contact, and Back-to-Top button
-- Modern and responsive design
-- Smooth scrolling animations
-- Social media icons in the footer
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Demo
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-A live demo of the website can be accessed [here](https://smit2553.github.io/).
+## Learn More
 
-## Installation
+To learn more about Next.js, take a look at the following resources:
 
-1. Clone the repository: `git clone https://github.com/Smit2553/smit2553.github.io`
-2. Navigate to the project directory: `cd your-portfolio`
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Usage
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-1. Customize the content in the HTML files (`index.html`).
-2. Add your profile picture, projects, education details, and social media links.
-3. Modify the CSS styles in `styles.css` to match your design preferences.
-4. Add your own images to the `assets` directory.
-5. If using Font Awesome icons, include the Font Awesome CSS link in the `<head>` of `index.html`.
-6. Launch the website by opening `index.html` in a web browser.
+## Deploy on Vercel
 
-## Contributing
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Contributions are welcome! If you find any issues or have suggestions for improvements, feel free to create a pull request or open an issue.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
