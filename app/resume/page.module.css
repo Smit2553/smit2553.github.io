@@ -1,0 +1,16 @@
+.itemcontainer {
+  margin: 20px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  margin: 15px;
+}
+
+.flexborder {
+  border: 1px solid #c6d0f5;
+  border-radius: 5px;
+  margin: 10px;
+  margin-bottom: 0px;
+}

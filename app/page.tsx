@@ -1,6 +1,11 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 
+export const metadata = {
+  title: "Smit Devrukhkar",
+  description: "Personal website of Smit Devrukhkar",
+};
+
 export default function Home() {
   return (
     <div className={styles.container}>

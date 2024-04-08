@@ -4,11 +4,6 @@ import "./globals.css";
 
 const jetbrains = JetBrains_Mono({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Smit Devrukhkar",
-  description: "Personal website of Smit Devrukhkar",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
