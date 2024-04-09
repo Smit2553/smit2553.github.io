@@ -11,13 +11,12 @@ export default function ProjectItem(props: {
       <div className={styles.container1}>
         <h3>{props.title}</h3>
         <p>{props.techStack}</p>
+        <div className={styles.border}></div>
       </div>
 
       <div className={styles.container1}>
         <p>{props.description}</p>
-        <a href={props.link} target="_blank" rel="noreferrer">
-          Link to project
-        </a>
+        <a href={props.link}>Source Code</a>
       </div>
     </div>
   );
