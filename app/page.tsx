@@ -21,6 +21,22 @@ export default function Home() {
             Resume
           </a>
         </div>
+        <div className={styles.container2}>
+          <Image
+            src="/icons/logo-github.svg"
+            alt="Github"
+            width={30}
+            height={30}
+            className={styles.icon}
+          />
+          <Image
+            src="/icons/logo-linkedin.svg"
+            alt="Github"
+            width={30}
+            height={30}
+            className={styles.icon}
+          />
+        </div>
       </div>
 
       <div className={styles.imageContainer}>
