@@ -79,7 +79,7 @@ export default function Projects() {
         </div>
       </div>
       <div className={styles.flexborder}></div>
-      <div className={styles.imageContainer}>
+      <div>
         <h1>Skills</h1>
         <ResumeItem
           title="Programming Languages"
