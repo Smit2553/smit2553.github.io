@@ -22,20 +22,25 @@ export default function Home() {
           </a>
         </div>
         <div className={styles.container2}>
-          <Image
-            src="/icons/logo-github.svg"
-            alt="Github"
-            width={30}
-            height={30}
-            className={styles.icon}
-          />
-          <Image
-            src="/icons/logo-linkedin.svg"
-            alt="Github"
-            width={30}
-            height={30}
-            className={styles.icon}
-          />
+          <a href="https://github.com/Smit2553" target="_blank">
+            <Image
+              src="/icons/logo-github.svg"
+              alt="Github"
+              width={30}
+              height={30}
+              className={styles.icon}
+            />
+          </a>
+
+          <a href="https://www.linkedin.com/in/smitsd/" target="_blank">
+            <Image
+              src="/icons/logo-linkedin.svg"
+              alt="LinkedIn"
+              width={30}
+              height={30}
+              className={styles.icon}
+            />
+          </a>
         </div>
       </div>
 
