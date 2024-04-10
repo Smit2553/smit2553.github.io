@@ -83,7 +83,7 @@ export default function Projects() {
         </div>
         <div className={styles.flexborder}></div>
         <div>
-          <h1>Skills</h1>
+          <h1>Additional Information</h1>
           <ResumeItem
             title="Programming Languages"
             description="Python, C/C++, Java, JavaScript, HTML/CSS  "
@@ -98,7 +98,16 @@ export default function Projects() {
           />
           <ResumeItem
             title="Tools"
-            description="Git, Docker, VS Code, PyCharm, IntelliJ, Android Studio"
+            description="Git, Docker, VS Code, PyCharm, IntelliJ, Android Studio, Microsoft Office, Photoshop"
+          />
+          <ResumeItem
+            title="Operating Systems"
+            description="Windows, MacOS, Linux"
+          />
+          <ResumeItem
+            title="Contact Information"
+            description="Email: smitdev3@gmail.com"
+            description2="Phone: +1 669 388-1301"
           />
         </div>
       </div>
