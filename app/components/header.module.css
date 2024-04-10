@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  border-bottom: #c6d0f5 1px solid;
+  padding: 10px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.linksContainer {
+  margin-top: 10px;
+}
+
+.link {
+  color: #c6d0f5;
+  text-decoration: none;
+  margin: 10px;
+}
+
+.backlink {
+  flex: 1;
+}
+
+.name {
+  margin: 0;
+}

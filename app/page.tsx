@@ -50,7 +50,6 @@ export default function Home() {
           src="/profilepicture.jpg"
           alt="Picture of the author"
           layout="fill"
-          objectFit="contain"
         />
       </div>
     </div>
