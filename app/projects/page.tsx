@@ -25,6 +25,18 @@ export default function Projects() {
           link="https://github.com/Smit2553/dialogue-social"
           techStack="Flutter, Dart"
         />
+        <ProjectItem
+          title="Deadline.AI"
+          description="AI powered calendar app that helps you manage your time better."
+          link="https://github.com/Smit2553/deadline.ai-frontend"
+          techStack="React Native, TypeScript, Python"
+        />
+        <ProjectItem
+          title="Fiber"
+          description="AI powered nutrition app that helps you manage your diet better."
+          link="https://github.com/Smit2553/Fiber"
+          techStack="React Native, TypeScript, Python, Flask"
+        />
       </div>
     </div>
   );
