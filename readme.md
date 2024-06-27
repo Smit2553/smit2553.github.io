@@ -2,7 +2,7 @@
 
 This is the repository for my personal website. It is built on the Next.js framework and is hosted on GitHub Pages.
 
-The website is built to showcase my projects, and display my resume and contact information.
+The website is built to showcase my projects and display my resume and contact information.
 
 The main design goal of the website is to be simple and easy to navigate. While still providing all the necessary information in a clean and organized manner.
 
