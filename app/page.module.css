@@ -20,17 +20,20 @@
   margin: 10px;
 }
 .icon {
-  background-color: #c6d0f5;
-  border-radius: 5px;
   height: 30px;
   width: 30px;
 }
+
 .icon:hover {
   opacity: 0.5;
   transition: 0.2s;
 }
 .link {
-  color: #c6d0f5;
+  color: #eeeeee;
+  background-color: #76abae;
+  padding: 5px;
+  border-radius: 5px;
+  text-decoration: none;
 }
 
 .imageContainer {

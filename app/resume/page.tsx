@@ -1,4 +1,4 @@
-import Image from "next/legacy/image";
+import Image from "next/image";
 import styles from "./page.module.css";
 import ResumeItem from "../components/resumeItem";
 import Header from "../components/header";

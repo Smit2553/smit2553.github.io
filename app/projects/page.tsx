@@ -1,12 +1,11 @@
-import Image from "next/legacy/image";
+"use client";
+
+import Image from "next/image";
 import styles from "./page.module.css";
 import ProjectItem from "../components/projectItem";
 import Header from "../components/header";
-
-export const metadata = {
-  title: "Smit's Projects",
-  description: "Projects Page in the Personal website of Smit Devrukhkar",
-};
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 export default function Projects() {
   return (
@@ -36,6 +35,7 @@ export default function Projects() {
           description="AI powered nutrition app that helps you manage your diet better."
           link="https://github.com/Smit2553/Fiber"
           techStack="React Native, TypeScript, Python, Flask"
+          image="/fiberimage.png"
         />
       </div>
     </div>

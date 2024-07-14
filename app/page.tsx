@@ -1,10 +1,8 @@
-import Image from "next/legacy/image";
+"use client";
+export * from "framer-motion";
+import Image from "next/image";
 import styles from "./page.module.css";
-
-export const metadata = {
-  title: "Smit Devrukhkar",
-  description: "Personal website of Smit Devrukhkar",
-};
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
@@ -14,33 +12,63 @@ export default function Home() {
         <h1>Smit Devrukhkar</h1>
         <h2>Developer</h2>
         <div className={styles.container1}>
-          <a href="/projects" className={styles.link}>
+          <motion.a
+            href="/projects"
+            className={styles.link}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
             Projects
-          </a>
-          <a href="/resume" className={styles.link}>
+          </motion.a>
+          <motion.a
+            href="/resume"
+            className={styles.link}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
             Resume
-          </a>
+          </motion.a>
         </div>
         <div className={styles.container2}>
-          <a href="https://github.com/Smit2553" target="_blank">
+          <motion.a
+            href="https://github.com/Smit2553"
+            target="_blank"
+            className={styles.iconContainer}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
             <Image
               src="/icons/logo-github.svg"
               alt="Github"
               width={30}
               height={30}
               className={styles.icon}
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+              }}
             />
-          </a>
+          </motion.a>
 
-          <a href="https://www.linkedin.com/in/smitsd/" target="_blank">
+          <motion.a
+            href="https://www.linkedin.com/in/smitsd/"
+            target="_blank"
+            className={styles.iconContainer}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
             <Image
               src="/icons/logo-linkedin.svg"
               alt="LinkedIn"
               width={30}
               height={30}
               className={styles.icon}
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+              }}
             />
-          </a>
+          </motion.a>
         </div>
       </div>
 
@@ -49,7 +77,8 @@ export default function Home() {
           className={styles.profilepicture}
           src="/profilepicture.jpg"
           alt="Picture of the author"
-          layout="fill"
+          fill
+          sizes="100vw"
         />
       </div>
     </div>

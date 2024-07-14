@@ -1,0 +1,31 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  flex-direction: row;
+  overflow-y: scroll;
+  justify-content: center;
+  align-items: center;
+}
+
+.projectContainer {
+  background-color: #eeeeee;
+  padding: 1rem;
+  border-radius: 5px;
+  max-width: 75%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.image {
+  width: 50%;
+  height: auto;
+  border-radius: 5px;
+}
