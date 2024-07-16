@@ -36,7 +36,6 @@ export default function ProjectItemOverlay(props: {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={() => props.setIsOpen(false)}
     >
       <motion.div className={styles.projectContainer}>
         <motion.img
@@ -45,7 +44,30 @@ export default function ProjectItemOverlay(props: {
           className={styles.image}
           variants={staggerItem}
         />
+
         <motion.div variants={staggerContainer} initial="hidden" animate="show">
+          <motion.a
+            onClick={() => props.setIsOpen(false)}
+            target="_blank"
+            className={styles.exitIcon}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            variants={staggerItem}
+          >
+            <Image
+              src="/icons/cross-circle.svg"
+              alt="Live Website"
+              width={30}
+              height={30}
+              className={styles.icon}
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                backgroundColor: "#eeeeee",
+                borderRadius: "50%",
+              }}
+            />
+          </motion.a>
           <motion.div className={styles.container1} variants={staggerContainer}>
             <motion.h3 variants={staggerItem}>{props.title}</motion.h3>
             <motion.p variants={staggerItem}>{props.techStack}</motion.p>
