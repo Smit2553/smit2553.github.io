@@ -6,7 +6,10 @@ import ProjectItemOverlay from "./projectItemOverlay";
 export default function ProjectItem(props: {
   title: string;
   description: string;
-  link: string;
+  links?: {
+    github?: string;
+    live?: string;
+  };
   techStack: string;
   image: string;
 }) {
@@ -30,7 +33,7 @@ export default function ProjectItem(props: {
         <ProjectItemOverlay
           title={props.title}
           description={props.description}
-          link={props.link}
+          links={props.links}
           techStack={props.techStack}
           image={props.image}
           isOpen={isOpen}
