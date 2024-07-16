@@ -11,7 +11,17 @@ export default function Projects() {
   return (
     <div>
       <Header backlink="/" />
-      <div className={styles.container}>
+      <motion.div className={styles.container}>
+        <ProjectItem
+          title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
+          description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
+          links={{
+            github: "https://github.com/LuaanNguyen/Board-Game-Cafe-Website",
+            live: "https://board-game-cafe-website.vercel.app/",
+          }}
+          image="/sipnplaypicture.png"
+          techStack="React.js, Three.js, Tailwind CSS, Vite"
+        />
         <ProjectItem
           title="Smit's Personal Website"
           description="My personal website built to showcase my projects and my resume."
@@ -40,17 +50,7 @@ export default function Projects() {
           techStack="React Native, TypeScript, Python, Flask"
           image="/fiberimage.png"
         />
-        <ProjectItem
-          title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
-          description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
-          links={{
-            github: "https://github.com/LuaanNguyen/Board-Game-Cafe-Website",
-            live: "https://board-game-cafe-website.vercel.app/",
-          }}
-          image="/sipnplaypicture.png"
-          techStack="React.js, Three.js, Tailwind CSS, Vite"
-        />
-      </div>
+      </motion.div>
     </div>
   );
 }
