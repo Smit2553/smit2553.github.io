@@ -1,19 +1,20 @@
 .container {
   padding: 1rem;
-  border: #c6d0f5 1px solid;
+  border: #31363f 1px solid;
   border-radius: 5px;
   margin: 1rem;
   width: 300px;
-  height: 300px;
   text-align: center;
+  display: flex;
   flex-wrap: wrap;
-}
-
-.border {
-  border: #c6d0f5 1px solid;
-  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 5px;
+  height: 200px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
 }
 
 .container a {
-  color: #c6d0f5;
+  color: #31363f;
 }

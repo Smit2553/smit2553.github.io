@@ -1,23 +1,45 @@
 import styles from "./projectItem.module.css";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import ProjectItemOverlay from "./projectItemOverlay";
 
 export default function ProjectItem(props: {
   title: string;
   description: string;
-  link: string;
+  links?: {
+    github?: string;
+    live?: string;
+  };
   techStack: string;
+  image: string;
 }) {
-  return (
-    <div className={styles.container}>
-      <div className={styles.container1}>
-        <h3>{props.title}</h3>
-        <p>{props.techStack}</p>
-        <div className={styles.border}></div>
-      </div>
+  const [isOpen, setIsOpen] = useState(false);
 
-      <div className={styles.container1}>
-        <p>{props.description}</p>
-        <a href={props.link}>Source Code</a>
-      </div>
-    </div>
+  return (
+    <>
+      <motion.div
+        className={styles.container}
+        onClick={() => setIsOpen(!isOpen)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <motion.div className={styles.container1}>
+          <motion.h3>{props.title}</motion.h3>
+          <p>{props.techStack}</p>
+        </motion.div>
+      </motion.div>
+
+      {isOpen && (
+        <ProjectItemOverlay
+          title={props.title}
+          description={props.description}
+          links={props.links}
+          techStack={props.techStack}
+          image={props.image}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+        />
+      )}
+    </>
   );
 }

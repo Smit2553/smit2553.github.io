@@ -3,7 +3,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-evenly;
-  border-bottom: #c6d0f5 1px solid;
+  border-bottom: #31363f 1px solid;
   padding: 10px;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .link {
-  color: #c6d0f5;
+  color: #31363f;
   text-decoration: none;
   margin: 10px;
 }

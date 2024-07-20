@@ -6,6 +6,10 @@ The website is built to showcase my projects and display my resume and contact i
 
 The main design goal of the website is to be simple and easy to navigate. While still providing all the necessary information in a clean and organized manner.
 
+## Color Palette
+
+The color palette for the website can be found at [https://colorhunt.co/palette/eadfb49bb0c151829bf6995c](https://colorhunt.co/palette/eadfb49bb0c151829bf6995c).
+
 ## Demo
 
 The website is live at [smit2553.github.io](https://smit2553.github.io/).
