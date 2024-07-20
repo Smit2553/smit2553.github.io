@@ -26,14 +26,14 @@ export default function Projects() {
           title="Smit's Personal Website"
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
-          image=""
+          image="/personalwebsitepicture.jpeg"
           techStack="Next.js, TypeScript"
         />
         <ProjectItem
           title="Dialogue Social"
           description="Dialogue Social is an all purpose social media front-end."
           links={{ github: "https://github.com/Smit2553/dialogue-social" }}
-          image=""
+          image="/dialogue.png"
           techStack="Flutter, Dart"
         />
         <ProjectItem
@@ -41,7 +41,7 @@ export default function Projects() {
           description="AI powered calendar app that helps you manage your time better."
           links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
           techStack="React Native, TypeScript, Python"
-          image=""
+          image="/deadline.png"
         />
         <ProjectItem
           title="Fiber"
