@@ -26,7 +26,7 @@
 }
 
 .image {
-  width: auto;
+  width: 75%;
   max-height: 512px;
   border-radius: 5px;
   margin: 5px;
@@ -62,7 +62,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
   .projectContainer {
     flex-direction: column;
   }
