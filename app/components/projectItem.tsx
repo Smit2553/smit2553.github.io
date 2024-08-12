@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./projectItem.module.css"; // Adjusted to a different CSS module if needed
+import styles from "./projectItem.module.css";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -8,7 +8,7 @@ const staggerContainer = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
+      staggerChildren: 0.1,
     },
   },
 };
@@ -29,12 +29,15 @@ export default function ProjectItem(props: {
   image: string;
   reverse?: boolean;
 }) {
+  const [isContainerVisible, setContainerVisible] = React.useState(false);
+
   return (
     <motion.div
       className={styles.projectContainer}
       initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1, transition: { duration: 0.5 } }}
-      viewport={{ amount: 0.75, once: true }}
+      whileInView={{ opacity: 1, transition: { duration: 0.3 } }}
+      viewport={{ amount: 0.3, once: true }}
+      onAnimationComplete={() => setContainerVisible(true)}
     >
       {!props.reverse && (
         <motion.img
@@ -52,7 +55,7 @@ export default function ProjectItem(props: {
         }
         variants={staggerContainer}
         initial="hidden"
-        animate="show"
+        animate={isContainerVisible ? "show" : "hidden"}
       >
         <motion.h3 variants={staggerItem}>{props.title}</motion.h3>
         <motion.p variants={staggerItem}>{props.techStack}</motion.p>
