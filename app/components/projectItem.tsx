@@ -30,7 +30,12 @@ export default function ProjectItem(props: {
   reverse?: boolean;
 }) {
   return (
-    <motion.div className={styles.projectContainer}>
+    <motion.div
+      className={styles.projectContainer}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1, transition: { duration: 0.5 } }}
+      viewport={{ amount: 0.75, once: true }}
+    >
       {!props.reverse && (
         <motion.img
           src={props.image}

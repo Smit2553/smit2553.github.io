@@ -116,6 +116,7 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/dialogue-social" }}
           image="/dialogue.png"
           techStack="Flutter, Dart"
+          reverse={true}
         />
         <ProjectItem
           title="Deadline.AI"
