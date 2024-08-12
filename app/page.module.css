@@ -43,3 +43,8 @@
   border-radius: 50%;
   overflow: hidden;
 }
+
+.projectContainer {
+  display: flex;
+  flex-direction: column;
+}

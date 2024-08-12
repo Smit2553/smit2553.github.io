@@ -1,20 +1,59 @@
-.container {
+.projectContainer {
+  background-color: #eeeeee;
   padding: 1rem;
-  border: #31363f 1px solid;
   border-radius: 5px;
-  margin: 1rem;
-  width: 300px;
-  text-align: center;
   display: flex;
-  flex-wrap: wrap;
-  overflow: hidden;
-  box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 5px;
-  height: 200px;
-  align-items: center;
+  flex-direction: row;
   justify-content: center;
-  align-self: center;
+  align-items: center;
+  margin: 20px auto; /* Centers the element and adds spacing */
 }
 
-.container a {
-  color: #31363f;
+.image {
+  max-width: 50%;
+  max-height: 512px;
+  border-radius: 5px;
+}
+
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  margin-left: 10px;
+  flex: 1;
+}
+
+.contentContainerReverse {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  margin-right: 10px;
+  flex: 1;
+}
+
+.linksContainer {
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+}
+
+.iconContainer {
+  margin-right: 10px;
+}
+
+.icon {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 1000px) {
+  .projectContainer {
+    flex-direction: column;
+    max-width: 100%; /* Ensures the component uses full width on smaller screens */
+  }
+  .image {
+    width: 100%;
+  }
 }

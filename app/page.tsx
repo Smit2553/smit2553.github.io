@@ -3,82 +3,126 @@ export * from "framer-motion";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
+import ProjectItem from "./components/projectItem";
 
 export default function Home() {
   return (
-    <div className={styles.container}>
-      <div>
-        <h2>Presenting,</h2>
-        <h1>Smit Devrukhkar</h1>
-        <h2>Developer</h2>
-        <div className={styles.container1}>
-          <motion.a
-            href="/projects"
-            className={styles.link}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            Projects
-          </motion.a>
-          <motion.a
-            href="/resume"
-            className={styles.link}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            Resume
-          </motion.a>
-        </div>
-        <div className={styles.container2}>
-          <motion.a
-            href="https://github.com/Smit2553"
-            target="_blank"
-            className={styles.iconContainer}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Image
-              src="/icons/logo-github.svg"
-              alt="Github"
-              width={30}
-              height={30}
-              className={styles.icon}
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-              }}
-            />
-          </motion.a>
+    <div>
+      <div className={styles.container}>
+        <div>
+          <h2>Presenting,</h2>
+          <h1>Smit Devrukhkar</h1>
+          <h2>Developer</h2>
+          <div className={styles.container1}>
+            <motion.a
+              href="#projects"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Projects
+            </motion.a>
+            <motion.a
+              href="/resume"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Resume
+            </motion.a>
+          </div>
+          <div className={styles.container2}>
+            <motion.a
+              href="https://github.com/Smit2553"
+              target="_blank"
+              className={styles.iconContainer}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Image
+                src="/icons/logo-github.svg"
+                alt="Github"
+                width={30}
+                height={30}
+                className={styles.icon}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                }}
+              />
+            </motion.a>
 
-          <motion.a
-            href="https://www.linkedin.com/in/smitsd/"
-            target="_blank"
-            className={styles.iconContainer}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Image
-              src="/icons/logo-linkedin.svg"
-              alt="LinkedIn"
-              width={30}
-              height={30}
-              className={styles.icon}
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-              }}
-            />
-          </motion.a>
+            <motion.a
+              href="https://www.linkedin.com/in/smitsd/"
+              target="_blank"
+              className={styles.iconContainer}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Image
+                src="/icons/logo-linkedin.svg"
+                alt="LinkedIn"
+                width={30}
+                height={30}
+                className={styles.icon}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                }}
+              />
+            </motion.a>
+          </div>
+        </div>
+
+        <div className={styles.imageContainer}>
+          <Image
+            className={styles.profilepicture}
+            src="/profilepicture.jpg"
+            alt="Picture of the author"
+            fill
+            sizes="100vw"
+          />
         </div>
       </div>
-
-      <div className={styles.imageContainer}>
-        <Image
-          className={styles.profilepicture}
-          src="/profilepicture.jpg"
-          alt="Picture of the author"
-          fill
-          sizes="100vw"
+      <div className={styles.projectContainer} id="projects">
+        <ProjectItem
+          title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
+          description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
+          links={{
+            github: "https://github.com/LuaanNguyen/Board-Game-Cafe-Website",
+            live: "https://board-game-cafe-website.vercel.app/",
+          }}
+          image="/sipnplaypicture.png"
+          techStack="React.js, Three.js, Tailwind CSS, Vite"
+        />
+        <ProjectItem
+          title="Fiber"
+          description="AI powered nutrition app that helps you manage your diet better."
+          links={{ github: "https://github.com/Smit2553/Fiber" }}
+          techStack="React Native, TypeScript, Python, Flask"
+          image="/fiberimage.png"
+          reverse={true}
+        />
+        <ProjectItem
+          title="Smit's Personal Website"
+          description="My personal website built to showcase my projects and my resume."
+          links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
+          image="/personalwebsitepicture.jpeg"
+          techStack="Next.js, TypeScript"
+        />
+        <ProjectItem
+          title="Dialogue Social"
+          description="Dialogue Social is an all purpose social media front-end."
+          links={{ github: "https://github.com/Smit2553/dialogue-social" }}
+          image="/dialogue.png"
+          techStack="Flutter, Dart"
+        />
+        <ProjectItem
+          title="Deadline.AI"
+          description="AI powered calendar app that helps you manage your time better."
+          links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
+          techStack="React Native, TypeScript, Python"
+          image="/deadline.png"
         />
       </div>
     </div>
