@@ -11,8 +11,9 @@ export default function Home() {
       <div className={styles.container}>
         <div>
           <h2>Presenting,</h2>
-          <h1>Smit Devrukhkar</h1>
-          <h2>Developer</h2>
+          <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
+          <h2>Full-Stack Developer</h2>
+          <h2>Student at Arizona State University</h2>
           <div className={styles.container1}>
             <motion.a
               href="#projects"
@@ -23,7 +24,7 @@ export default function Home() {
               Projects
             </motion.a>
             <motion.a
-              href="/resume"
+              href="#resume"
               className={styles.link}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -84,7 +85,11 @@ export default function Home() {
           />
         </div>
       </div>
-      <div className={styles.projectContainer} id="projects">
+      <h1 className={styles.moduleTitle} id="projects">
+        Projects
+      </h1>
+
+      <div className={styles.projectContainer}>
         <ProjectItem
           title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
           description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
@@ -126,6 +131,10 @@ export default function Home() {
           image="/deadline.png"
         />
       </div>
+      <h1 className={styles.moduleTitle} id="resume">
+        Resume
+      </h1>
+      <div className={styles.resumeContainer}></div>
     </div>
   );
 }
