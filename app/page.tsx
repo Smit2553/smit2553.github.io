@@ -106,7 +106,6 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/Fiber" }}
           techStack="React Native, TypeScript, Python, Flask"
           image="/fiberimage.png"
-          reverse={true}
         />
         <ProjectItem
           title="Smit's Personal Website"
@@ -121,7 +120,6 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/dialogue-social" }}
           image="/dialogue.png"
           techStack="Flutter, Dart"
-          reverse={true}
         />
         <ProjectItem
           title="Deadline.AI"
