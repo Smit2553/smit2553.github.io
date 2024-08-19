@@ -111,7 +111,7 @@ export default function Home() {
           title="Smit's Personal Website"
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
-          image="/personalwebsitepicture.jpeg"
+          image="/personalwebsitepicture.jpg"
           techStack="Next.js, TypeScript"
         />
         <ProjectItem
