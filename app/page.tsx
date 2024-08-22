@@ -3,82 +3,187 @@ export * from "framer-motion";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
+import ProjectItem from "./components/projectItem";
+import ExperienceItem from "./components/experienceItem";
+import { FaReact, FaPython } from "react-icons/fa";
+import {
+  TbBrandThreejs,
+  TbBrandVite,
+  TbBrandReactNative,
+  TbBrandNextjs,
+  TbBrandFlutter,
+} from "react-icons/tb";
+import { RiTailwindCssFill } from "react-icons/ri";
+import { SiTypescript, SiFlask, SiDart } from "react-icons/si";
 
 export default function Home() {
   return (
-    <div className={styles.container}>
-      <div>
-        <h2>Presenting,</h2>
-        <h1>Smit Devrukhkar</h1>
-        <h2>Developer</h2>
-        <div className={styles.container1}>
-          <motion.a
-            href="/projects"
-            className={styles.link}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            Projects
-          </motion.a>
-          <motion.a
-            href="/resume"
-            className={styles.link}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            Resume
-          </motion.a>
-        </div>
-        <div className={styles.container2}>
-          <motion.a
-            href="https://github.com/Smit2553"
-            target="_blank"
-            className={styles.iconContainer}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Image
-              src="/icons/logo-github.svg"
-              alt="Github"
-              width={30}
-              height={30}
-              className={styles.icon}
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-              }}
-            />
-          </motion.a>
+    <div>
+      <div className={styles.container}>
+        <div>
+          <h2>Presenting,</h2>
+          <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
+          <h2>Full-Stack Developer</h2>
+          <h2>Student at Arizona State University</h2>
+          <div className={styles.container1}>
+            <motion.a
+              href="#projects"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Projects
+            </motion.a>
+            <motion.a
+              href="#experience"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Experience
+            </motion.a>
+          </div>
+          <div className={styles.container2}>
+            <motion.a
+              href="https://github.com/Smit2553"
+              target="_blank"
+              className={styles.iconContainer}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Image
+                src="/icons/logo-github.svg"
+                alt="Github"
+                width={30}
+                height={30}
+                className={styles.icon}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                }}
+              />
+            </motion.a>
 
-          <motion.a
-            href="https://www.linkedin.com/in/smitsd/"
-            target="_blank"
-            className={styles.iconContainer}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Image
-              src="/icons/logo-linkedin.svg"
-              alt="LinkedIn"
-              width={30}
-              height={30}
-              className={styles.icon}
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-              }}
-            />
-          </motion.a>
+            <motion.a
+              href="https://www.linkedin.com/in/smitsd/"
+              target="_blank"
+              className={styles.iconContainer}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Image
+                src="/icons/logo-linkedin.svg"
+                alt="LinkedIn"
+                width={30}
+                height={30}
+                className={styles.icon}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                }}
+              />
+            </motion.a>
+          </div>
+        </div>
+
+        <div className={styles.imageContainer}>
+          <img
+            className={styles.profilepicture}
+            src="/profilepicture.png"
+            alt="Picture of the author"
+          />
         </div>
       </div>
+      <h1 className={styles.moduleTitle} id="projects">
+        Projects
+      </h1>
 
-      <div className={styles.imageContainer}>
-        <Image
-          className={styles.profilepicture}
-          src="/profilepicture.jpg"
-          alt="Picture of the author"
-          fill
-          sizes="100vw"
+      <div className={styles.projectContainer}>
+        <ProjectItem
+          title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
+          description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
+          links={{
+            github: "https://github.com/LuaanNguyen/Board-Game-Cafe-Website",
+            live: "https://board-game-cafe-website.vercel.app/",
+          }}
+          image="/sipnplaypicture.png"
+          techStack={["React.js", "Three.js", "Tailwind CSS", "Vite"]}
+          icons={[
+            <FaReact size={30} key={1} />,
+            <TbBrandThreejs size={30} key={2} />,
+            <RiTailwindCssFill size={30} key={3} />,
+            <TbBrandVite size={30} key={4} />,
+          ]}
+        />
+        <ProjectItem
+          title="Fiber"
+          description="AI powered nutrition app that helps you manage your diet better."
+          links={{ github: "https://github.com/Smit2553/Fiber" }}
+          techStack={["React Native", "TypeScript", "Python", "Flask"]}
+          icons={[
+            <TbBrandReactNative size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+            <FaPython size={30} key={3} />,
+            <SiFlask size={30} key={4} />,
+          ]}
+          image="/fiberimage.png"
+        />
+        <ProjectItem
+          title="Smit's Personal Website"
+          description="My personal website built to showcase my projects and my resume."
+          links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
+          image="/personalwebsitepicture.jpg"
+          techStack={["Next.js", "TypeScript"]}
+          icons={[
+            <TbBrandNextjs size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+          ]}
+        />
+        <ProjectItem
+          title="Dialogue Social"
+          description="Dialogue Social is an all purpose social media front-end."
+          links={{ github: "https://github.com/Smit2553/dialogue-social" }}
+          image="/dialogue.png"
+          techStack={["Flutter", "Dart"]}
+          icons={[
+            <TbBrandFlutter size={30} key={1} />,
+            <SiDart size={30} key={2} />,
+          ]}
+        />
+        <ProjectItem
+          title="Deadline.AI"
+          description="AI powered calendar app that helps you manage your time better."
+          links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
+          techStack={["React Native", "TypeScript", "Python"]}
+          icons={[
+            <TbBrandReactNative size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+            <FaPython size={30} key={3} />,
+          ]}
+          image="/deadline.png"
+        />
+      </div>
+      <h1 className={styles.moduleTitle} id="experience">
+        Experience
+      </h1>
+      <div className={styles.experienceContainer}>
+        <ExperienceItem
+          title="Sponsor Coordinator"
+          company="PyBay"
+          duration="June 2022 - June 2023"
+          description="PyBay is the premier Python conference in the San Francisco Bay Area."
+        />
+        <ExperienceItem
+          title="IT Support"
+          company="De Anza College"
+          duration="January 2023 - March 2023"
+          description="De Anza College is a public community college in Cupertino, California."
+        />
+        <ExperienceItem
+          title="Technical Support Intern"
+          company="Golden Gate University"
+          duration="July 2022 - February 2023"
+          description="Golden Gate University is a private university in San Francisco, California."
         />
       </div>
     </div>

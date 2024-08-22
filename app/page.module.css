@@ -7,6 +7,11 @@
   flex-wrap: wrap;
 }
 
+.moduleTitle {
+  font-size: 3rem;
+  text-align: center;
+}
+
 .container1 {
   display: flex;
   flex-direction: row;
@@ -38,8 +43,23 @@
 
 .imageContainer {
   position: relative;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
+  display: block;
+  max-width: 450px;
+  max-height: 450px;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
   overflow: hidden;
+}
+
+.imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.projectContainer {
+  display: flex;
+  flex-direction: column;
 }
