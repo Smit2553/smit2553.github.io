@@ -25,7 +25,8 @@ export default function ProjectItem(props: {
     github?: string;
     live?: string;
   };
-  techStack: string;
+  icons?: React.ReactNode[];
+  techStack: string[];
   image: string;
   reverse?: boolean;
 }) {
@@ -58,7 +59,23 @@ export default function ProjectItem(props: {
         animate={isContainerVisible ? "show" : "hidden"}
       >
         <motion.h3 variants={staggerItem}>{props.title}</motion.h3>
-        <motion.p variants={staggerItem}>{props.techStack}</motion.p>
+        {props.techStack && props.techStack.length > 0 && (
+          <motion.ul className={styles.techStackList} variants={staggerItem}>
+            {props.techStack.map((tech, index) => (
+              <motion.li
+                key={index}
+                className={styles.techStackItem}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                {props.icons && props.icons[index] && (
+                  <span className={styles.icon}>{props.icons[index]}</span>
+                )}
+                {tech}
+              </motion.li>
+            ))}
+          </motion.ul>
+        )}
         <motion.p variants={staggerItem}>{props.description}</motion.p>
         <motion.div className={styles.linksContainer} variants={staggerItem}>
           {props.links?.github && (

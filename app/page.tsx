@@ -4,6 +4,16 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
 import ProjectItem from "./components/projectItem";
+import { FaReact, FaPython } from "react-icons/fa";
+import {
+  TbBrandThreejs,
+  TbBrandVite,
+  TbBrandReactNative,
+  TbBrandNextjs,
+  TbBrandFlutter,
+} from "react-icons/tb";
+import { RiTailwindCssFill } from "react-icons/ri";
+import { SiTypescript, SiFlask, SiDart } from "react-icons/si";
 
 export default function Home() {
   return (
@@ -24,7 +34,7 @@ export default function Home() {
               Projects
             </motion.a>
             <motion.a
-              href="#resume"
+              href="#experience"
               className={styles.link}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -98,13 +108,25 @@ export default function Home() {
             live: "https://board-game-cafe-website.vercel.app/",
           }}
           image="/sipnplaypicture.png"
-          techStack="React.js, Three.js, Tailwind CSS, Vite"
+          techStack={["React.js", "Three.js", "Tailwind CSS", "Vite"]}
+          icons={[
+            <FaReact size={30} />,
+            <TbBrandThreejs size={30} />,
+            <RiTailwindCssFill size={30} />,
+            <TbBrandVite size={30} />,
+          ]}
         />
         <ProjectItem
           title="Fiber"
           description="AI powered nutrition app that helps you manage your diet better."
           links={{ github: "https://github.com/Smit2553/Fiber" }}
-          techStack="React Native, TypeScript, Python, Flask"
+          techStack={["React Native", "TypeScript", "Python", "Flask"]}
+          icons={[
+            <TbBrandReactNative size={30} />,
+            <SiTypescript size={30} />,
+            <FaPython size={30} />,
+            <SiFlask size={30} />,
+          ]}
           image="/fiberimage.png"
         />
         <ProjectItem
@@ -112,25 +134,32 @@ export default function Home() {
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
           image="/personalwebsitepicture.jpg"
-          techStack="Next.js, TypeScript"
+          techStack={["Next.js", "TypeScript"]}
+          icons={[<TbBrandNextjs size={30} />, <SiTypescript size={30} />]}
         />
         <ProjectItem
           title="Dialogue Social"
           description="Dialogue Social is an all purpose social media front-end."
           links={{ github: "https://github.com/Smit2553/dialogue-social" }}
           image="/dialogue.png"
-          techStack="Flutter, Dart"
+          techStack={["Flutter", "Dart"]}
+          icons={[<TbBrandFlutter size={30} />, <SiDart size={30} />]}
         />
         <ProjectItem
           title="Deadline.AI"
           description="AI powered calendar app that helps you manage your time better."
           links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
-          techStack="React Native, TypeScript, Python"
+          techStack={["React Native", "TypeScript", "Python"]}
+          icons={[
+            <TbBrandReactNative size={30} />,
+            <SiTypescript size={30} />,
+            <FaPython size={30} />,
+          ]}
           image="/deadline.png"
         />
       </div>
-      <h1 className={styles.moduleTitle} id="resume">
-        Resume
+      <h1 className={styles.moduleTitle} id="experience">
+        Experience
       </h1>
       <div className={styles.resumeContainer}></div>
     </div>
