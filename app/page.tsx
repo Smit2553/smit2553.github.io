@@ -29,7 +29,7 @@ export default function Home() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              Resume
+              Experience
             </motion.a>
           </div>
           <div className={styles.container2}>
