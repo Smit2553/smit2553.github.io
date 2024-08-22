@@ -4,6 +4,7 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
 import ProjectItem from "./components/projectItem";
+import ExperienceItem from "./components/experienceItem";
 import { FaReact, FaPython } from "react-icons/fa";
 import {
   TbBrandThreejs,
@@ -161,7 +162,26 @@ export default function Home() {
       <h1 className={styles.moduleTitle} id="experience">
         Experience
       </h1>
-      <div className={styles.resumeContainer}></div>
+      <div className={styles.experienceContainer}>
+        <ExperienceItem
+          title="Sponsor Coordinator"
+          company="PyBay"
+          duration="June 2022 - June 2023"
+          description="PyBay is the premier Python conference in the San Francisco Bay Area."
+        />
+        <ExperienceItem
+          title="IT Support"
+          company="De Anza College"
+          duration="January 2023 - March 2023"
+          description="De Anza College is a public community college in Cupertino, California."
+        />
+        <ExperienceItem
+          title="Technical Support Intern"
+          company="Golden Gate University"
+          duration="July 2022 - February 2023"
+          description="Golden Gate University is a private university in San Francisco, California."
+        />
+      </div>
     </div>
   );
 }

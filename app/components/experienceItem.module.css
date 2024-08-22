@@ -1,0 +1,27 @@
+.container {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.h3,
+.h4,
+.p {
+  margin: 5px 0;
+  opacity: 0;
+}
+
+.duration {
+  margin-left: auto;
+  font-weight: 400;
+}
