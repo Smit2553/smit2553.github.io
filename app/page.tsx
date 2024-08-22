@@ -109,10 +109,10 @@ export default function Home() {
           image="/sipnplaypicture.png"
           techStack={["React.js", "Three.js", "Tailwind CSS", "Vite"]}
           icons={[
-            <FaReact size={30} />,
-            <TbBrandThreejs size={30} />,
-            <RiTailwindCssFill size={30} />,
-            <TbBrandVite size={30} />,
+            <FaReact size={30} key={1} />,
+            <TbBrandThreejs size={30} key={2} />,
+            <RiTailwindCssFill size={30} key={3} />,
+            <TbBrandVite size={30} key={4} />,
           ]}
         />
         <ProjectItem
@@ -121,10 +121,10 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/Fiber" }}
           techStack={["React Native", "TypeScript", "Python", "Flask"]}
           icons={[
-            <TbBrandReactNative size={30} />,
-            <SiTypescript size={30} />,
-            <FaPython size={30} />,
-            <SiFlask size={30} />,
+            <TbBrandReactNative size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+            <FaPython size={30} key={3} />,
+            <SiFlask size={30} key={4} />,
           ]}
           image="/fiberimage.png"
         />
@@ -134,7 +134,10 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
           image="/personalwebsitepicture.jpg"
           techStack={["Next.js", "TypeScript"]}
-          icons={[<TbBrandNextjs size={30} />, <SiTypescript size={30} />]}
+          icons={[
+            <TbBrandNextjs size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+          ]}
         />
         <ProjectItem
           title="Dialogue Social"
@@ -142,7 +145,10 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/dialogue-social" }}
           image="/dialogue.png"
           techStack={["Flutter", "Dart"]}
-          icons={[<TbBrandFlutter size={30} />, <SiDart size={30} />]}
+          icons={[
+            <TbBrandFlutter size={30} key={1} />,
+            <SiDart size={30} key={2} />,
+          ]}
         />
         <ProjectItem
           title="Deadline.AI"
@@ -150,9 +156,9 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
           techStack={["React Native", "TypeScript", "Python"]}
           icons={[
-            <TbBrandReactNative size={30} />,
-            <SiTypescript size={30} />,
-            <FaPython size={30} />,
+            <TbBrandReactNative size={30} key={1} />,
+            <SiTypescript size={30} key={2} />,
+            <FaPython size={30} key={3} />,
           ]}
           image="/deadline.png"
         />
