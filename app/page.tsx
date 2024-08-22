@@ -87,12 +87,10 @@ export default function Home() {
         </div>
 
         <div className={styles.imageContainer}>
-          <Image
+          <img
             className={styles.profilepicture}
-            src="/profilepicture.jpg"
+            src="/profilepicture.png"
             alt="Picture of the author"
-            fill
-            sizes="100vw"
           />
         </div>
       </div>
