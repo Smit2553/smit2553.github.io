@@ -203,24 +203,28 @@ export default function Home() {
           company="Knowledge Enterprise, Arizona State University"
           duration="September 2024 - Present"
           description="Knowledge Enterprise is the research arm of Arizona State University."
+          logoUrl="/logos/asuicon.jpg"
         />
         <ExperienceItem
           title="Sponsor Coordinator"
           company="PyBay"
           duration="June 2022 - June 2023"
           description="PyBay is the premier Python conference in the San Francisco Bay Area."
+          logoUrl="/logos/pybay_logo.jpg"
         />
         <ExperienceItem
           title="IT Support"
           company="De Anza College"
           duration="January 2023 - March 2023"
           description="De Anza College is a public community college in Cupertino, California."
+          logoUrl="/logos/de_anza.jpg"
         />
         <ExperienceItem
           title="Technical Support Intern"
           company="Golden Gate University"
           duration="July 2022 - February 2023"
           description="Golden Gate University is a private university in San Francisco, California."
+          logoUrl="/logos/golden_gate_university_logo.jpg"
         />
       </div>
     </div>
