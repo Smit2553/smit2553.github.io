@@ -14,7 +14,13 @@ import {
   TbBrandFlutter,
 } from "react-icons/tb";
 import { RiTailwindCssFill } from "react-icons/ri";
-import { SiTypescript, SiFlask, SiDart } from "react-icons/si";
+import {
+  SiTypescript,
+  SiFlask,
+  SiDart,
+  SiJavascript,
+  SiFastapi,
+} from "react-icons/si";
 
 export default function Home() {
   return (
@@ -116,7 +122,32 @@ export default function Home() {
           ]}
         />
         <ProjectItem
-          title="Fiber"
+          title="HealthSync | HackMIT 2024"
+          description="Synchronizing hospital resources for efficient, patient-centered care."
+          links={{
+            github: "https://github.com/jspnguyen/HealthSync",
+            live: "https://healthsync.codestacx.com/",
+          }}
+          techStack={[
+            "React.js",
+            "JavaScript",
+            "Tailwind CSS",
+            "Vite",
+            "Python",
+            "FastAPI",
+          ]}
+          icons={[
+            <FaReact size={30} key={1} />,
+            <SiJavascript size={30} key={2} />,
+            <RiTailwindCssFill size={30} key={3} />,
+            <TbBrandVite size={30} key={4} />,
+            <FaPython size={30} key={5} />,
+            <SiFastapi size={30} key={6} />,
+          ]}
+          image="/HealthSync.jpg"
+        />
+        <ProjectItem
+          title="Fiber | UC Berkeley AI Hackathon 2024"
           description="AI powered nutrition app that helps you manage your diet better."
           links={{ github: "https://github.com/Smit2553/Fiber" }}
           techStack={["React Native", "TypeScript", "Python", "Flask"]}
@@ -168,22 +199,32 @@ export default function Home() {
       </h1>
       <div className={styles.experienceContainer}>
         <ExperienceItem
+          title="Research Technology Support Representative"
+          company="Knowledge Enterprise, Arizona State University"
+          duration="September 2024 - Present"
+          description="Knowledge Enterprise is the research arm of Arizona State University."
+          logoUrl="/logos/asuicon.jpg"
+        />
+        <ExperienceItem
           title="Sponsor Coordinator"
           company="PyBay"
           duration="June 2022 - June 2023"
           description="PyBay is the premier Python conference in the San Francisco Bay Area."
+          logoUrl="/logos/pybay_logo.jpg"
         />
         <ExperienceItem
           title="IT Support"
           company="De Anza College"
           duration="January 2023 - March 2023"
           description="De Anza College is a public community college in Cupertino, California."
+          logoUrl="/logos/de_anza.jpg"
         />
         <ExperienceItem
           title="Technical Support Intern"
           company="Golden Gate University"
           duration="July 2022 - February 2023"
           description="Golden Gate University is a private university in San Francisco, California."
+          logoUrl="/logos/golden_gate_university_logo.jpg"
         />
       </div>
     </div>
