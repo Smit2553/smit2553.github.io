@@ -29,7 +29,7 @@ export default function Home() {
         <div>
           <h2>Presenting,</h2>
           <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
-          <h2>Full-Stack Developer</h2>
+          <h2>Software Engineer, Tech Enthusiast</h2>
           <h2>Student at Arizona State University</h2>
           <div className={styles.container1}>
             <motion.a
