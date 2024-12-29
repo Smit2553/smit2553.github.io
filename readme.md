@@ -12,7 +12,7 @@ The color palette for the website can be found at [https://colorhunt.co/palette/
 
 ## Demo
 
-The website is live at [smit2553.github.io](https://smit2553.github.io/).
+The website is live and selfhosted at [smit.codestacx.com](https://smit.codestacx.com).
 
 ## Development
 
