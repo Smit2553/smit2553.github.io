@@ -52,10 +52,9 @@
   overflow: hidden;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1000px) {
   .imageContainer {
-    max-width: 300px;
-    max-height: 300px;
+    visibility: hidden;
   }
 }
 
