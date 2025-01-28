@@ -100,9 +100,11 @@ export default function Home() {
           />
         </div>
       </div>
-      <h1 className={styles.moduleTitle} id="projects">
-        Projects
-      </h1>
+      <div className={styles.moduleContainer}>
+        <h1 className={styles.moduleTitle} id="projects">
+          Projects
+        </h1>
+      </div>
 
       <div className={styles.projectContainer}>
         <ProjectItem
