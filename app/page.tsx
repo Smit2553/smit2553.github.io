@@ -21,6 +21,7 @@ import {
   SiJavascript,
   SiFastapi,
   SiOpenai,
+  SiModal,
 } from "react-icons/si";
 import { GrGoogle } from "react-icons/gr";
 import { PiOpenAiLogo } from "react-icons/pi";
@@ -121,6 +122,7 @@ export default function Home() {
           techStack={[
             "Google Gemini",
             "OpenAI Whisper",
+            "Modal",
             "FastAPI",
             "SQLite3",
             "React Native",
@@ -128,9 +130,10 @@ export default function Home() {
           icons={[
             <GrGoogle size={30} key={1} />,
             <SiOpenai size={30} key={2} />,
-            <SiFastapi size={30} key={3} />,
-            <TbSql size={30} key={4} />,
-            <TbBrandReactNative size={30} key={5} />,
+            <SiModal size={30} key={3} />,
+            <SiFastapi size={30} key={4} />,
+            <TbSql size={30} key={5} />,
+            <TbBrandReactNative size={30} key={6} />,
           ]}
         />
         <ProjectItem
