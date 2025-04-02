@@ -11,6 +11,7 @@ import {
   TbBrandReactNative,
   TbBrandNextjs,
   TbBrandFlutter,
+  TbSql,
 } from "react-icons/tb";
 import { RiTailwindCssFill } from "react-icons/ri";
 import {
@@ -19,7 +20,10 @@ import {
   SiDart,
   SiJavascript,
   SiFastapi,
+  SiOpenai,
 } from "react-icons/si";
+import { GrGoogle } from "react-icons/gr";
+import { PiOpenAiLogo } from "react-icons/pi";
 
 export default function Home() {
   return (
@@ -106,6 +110,28 @@ export default function Home() {
       </div>
 
       <div className={styles.projectContainer}>
+        <ProjectItem
+          title="Master Vault | HackPrinceton Spring 2025 Winner"
+          description="Winner for Best AI/LLM Inference hosted on Modal. Transform digital distraction into productive learning through AI-powered podcast experiences"
+          links={{
+            github: "https://github.com/LuaanNguyen/brainrot-master-vault",
+          }}
+          image="/princeton2025.png"
+          techStack={[
+            "Google Gemini",
+            "OpenAI Whisper",
+            "FastAPI",
+            "SQLite3",
+            "React Native",
+          ]}
+          icons={[
+            <GrGoogle size={30} key={1} />,
+            <SiOpenai size={30} key={2} />,
+            <SiFastapi size={30} key={3} />,
+            <TbSql size={30} key={4} />,
+            <TbBrandReactNative size={30} key={5} />,
+          ]}
+        />
         <ProjectItem
           title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
           description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
