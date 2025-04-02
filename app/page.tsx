@@ -115,6 +115,7 @@ export default function Home() {
           description="Winner for Best AI/LLM Inference hosted on Modal. Transform digital distraction into productive learning through AI-powered podcast experiences"
           links={{
             github: "https://github.com/LuaanNguyen/brainrot-master-vault",
+            live: "https://devpost.com/software/master-vault",
           }}
           image="/princeton2025.png"
           techStack={[
