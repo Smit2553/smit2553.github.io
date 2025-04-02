@@ -1,5 +1,4 @@
 "use client";
-export * from "framer-motion";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
