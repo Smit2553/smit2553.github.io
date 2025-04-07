@@ -115,7 +115,7 @@ export default function Home() {
           title="Master Vault | HackPrinceton Spring 2025 Winner"
           description="Winner for Best AI/LLM Inference hosted on Modal. Transform digital distraction into productive learning through AI-powered podcast experiences"
           links={{
-            github: "https://github.com/LuaanNguyen/brainrot-master-vault",
+            github: "https://github.com/Smit2553/master-vault",
             live: "https://devpost.com/software/master-vault",
           }}
           image="/princeton2025.png"
