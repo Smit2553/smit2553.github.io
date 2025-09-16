@@ -97,10 +97,13 @@ export default function Home() {
         </div>
 
         <div className={styles.imageContainer}>
-          <img
+          <Image
             className={styles.profilepicture}
             src="/profilepicture.png"
             alt="Picture of the author"
+            width={400}
+            height={400}
+            priority
           />
         </div>
       </div>
@@ -201,34 +204,25 @@ export default function Home() {
             <SiTypescript size={30} key={2} />,
           ]}
         />
-        <ProjectItem
-          title="Dialogue Social"
-          description="Dialogue Social is an all purpose social media front-end."
-          links={{ github: "https://github.com/Smit2553/dialogue-social" }}
-          image="/dialogue.png"
-          techStack={["Flutter", "Dart"]}
-          icons={[
-            <TbBrandFlutter size={30} key={1} />,
-            <SiDart size={30} key={2} />,
-          ]}
-        />
-        <ProjectItem
-          title="Deadline.AI"
-          description="AI powered calendar app that helps you manage your time better."
-          links={{ github: "https://github.com/Smit2553/deadline.ai-frontend" }}
-          techStack={["React Native", "TypeScript", "Python"]}
-          icons={[
-            <TbBrandReactNative size={30} key={1} />,
-            <SiTypescript size={30} key={2} />,
-            <FaPython size={30} key={3} />,
-          ]}
-          image="/deadline.png"
-        />
       </div>
       <h1 className={styles.moduleTitle} id="experience">
         Experience
       </h1>
       <div className={styles.experienceContainer}>
+        <ExperienceItem
+          title="Software Engineering Intern"
+          company="Defined Bioscience"
+          duration="September 2025 - Present"
+          description="Software engineering intern working on biotechnology solutions."
+          logoUrl="/logos/defined_bioscience_logo.jpg"
+        />
+        <ExperienceItem
+          title="Undergraduate Teaching Assistant - Operating Systems (Linux kernel, Ubuntu)"
+          company="School of Computing and Augmented Intelligence, Arizona State University"
+          duration="August 2025 - Present"
+          description="Teaching assistant for operating systems course focusing on Linux kernel and Ubuntu."
+          logoUrl="/logos/asuicon.jpg"
+        />
         <ExperienceItem
           title="Research Technology Support Representative"
           company="Knowledge Enterprise, Arizona State University"
@@ -244,14 +238,14 @@ export default function Home() {
           logoUrl="/logos/pybay_logo.jpg"
         />
         <ExperienceItem
-          title="IT Support"
+          title="Computer Lab Assistant"
           company="De Anza College"
           duration="January 2023 - March 2023"
           description="De Anza College is a public community college in Cupertino, California."
           logoUrl="/logos/de_anza.jpg"
         />
         <ExperienceItem
-          title="Technical Support Intern"
+          title="Database Intern"
           company="Golden Gate University"
           duration="July 2022 - February 2023"
           description="Golden Gate University is a private university in San Francisco, California."
