@@ -99,7 +99,7 @@ export default function Home() {
         <div className={styles.imageContainer}>
           <Image
             className={styles.profilepicture}
-            src="/profilepicture.png"
+            src="/profilepicture.jpg"
             alt="Picture of the author"
             width={400}
             height={400}
@@ -191,7 +191,7 @@ export default function Home() {
             <FaPython size={30} key={3} />,
             <SiFlask size={30} key={4} />,
           ]}
-          image="/fiberimage.png"
+          image="/fiberimage.jpg"
         />
         <ProjectItem
           title="Smit's Personal Website"
