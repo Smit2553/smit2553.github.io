@@ -4,7 +4,7 @@ import styles from "./page.module.css";
 import { motion } from "framer-motion";
 import ProjectItem from "./components/projectItem";
 import ExperienceItem from "./components/experienceItem";
-import { FaReact, FaPython } from "react-icons/fa";
+import { FaReact, FaPython, FaFileAudio } from "react-icons/fa";
 import {
   TbBrandThreejs,
   TbBrandVite,
@@ -22,6 +22,7 @@ import {
   SiFastapi,
   SiOpenai,
   SiModal,
+  SiElevenlabs,
 } from "react-icons/si";
 import { GrGoogle } from "react-icons/gr";
 import { PiOpenAiLogo } from "react-icons/pi";
@@ -137,6 +138,22 @@ export default function Home() {
             <SiFastapi size={30} key={4} />,
             <TbSql size={30} key={5} />,
             <TbBrandReactNative size={30} key={6} />,
+          ]}
+        />
+        <ProjectItem
+          title="Offscript | HackHarvard 2025"
+          description="Practice Technical Interviews how they actually happen, through natural conversation."
+          links={{
+            github: "https://github.com/Smit2553/Offscript",
+            live: "https://offscript.codestacx.com/",
+          }}
+          image="/offscript.png"
+          techStack={["Elevenlabs", "Google Gemini", "FastAPI", "Vapi"]}
+          icons={[
+            <SiElevenlabs size={30} key={1} />,
+            <GrGoogle size={30} key={1} />,
+            <SiFastapi size={30} key={2} />,
+            <FaFileAudio size={30} key={3} />,
           ]}
         />
         <ProjectItem
