@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import ProjectItem from "./components/projectItem";
 import ExperienceItem from "./components/experienceItem";
 import { FaReact, FaPython, FaFileAudio } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 import {
   TbBrandThreejs,
   TbBrandVite,
@@ -36,24 +37,6 @@ export default function Home() {
           <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
           <h2>Software Engineer, Tech Enthusiast</h2>
           <h2>Student at Arizona State University</h2>
-          <div className={styles.container1}>
-            <motion.a
-              href="#projects"
-              className={styles.link}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              Projects
-            </motion.a>
-            <motion.a
-              href="#experience"
-              className={styles.link}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              Experience
-            </motion.a>
-          </div>
           <div className={styles.container2}>
             <motion.a
               href="https://github.com/Smit2553"
@@ -93,6 +76,44 @@ export default function Home() {
                   height: "auto",
                 }}
               />
+            </motion.a>
+          </div>
+          <div className={styles.container1}>
+            <motion.a
+              href="#projects"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Projects
+            </motion.a>
+            <motion.a
+              href="#experience"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Experience
+            </motion.a>
+          </div>
+          <div className={styles.emailContainer}>
+            <motion.a
+              href="mailto:smitdev3@gmail.com"
+              className={styles.emailLink}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdEmail size={20} className={styles.emailIcon} />
+              smitdev3@gmail.com
+            </motion.a>
+            <motion.a
+              href="mailto:ssdevruk@asu.edu"
+              className={styles.emailLink}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <MdEmail size={20} className={styles.emailIcon} />
+              ssdevruk@asu.edu
             </motion.a>
           </div>
         </div>
