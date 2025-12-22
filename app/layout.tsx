@@ -15,7 +15,9 @@ export default function RootLayout({
       <title>Smit Devrukhkar</title>
       <link rel="icon" href="/favicon.ico" />
       <meta name="description" content="Smit Devrukhkar's personal website" />
-      <body className={jetbrains.className}>{children}</body>
+      <body className={jetbrains.className} suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
