@@ -2,6 +2,7 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 import { motion } from "framer-motion";
+import { TypeAnimation } from "react-type-animation";
 import ProjectItem from "./components/projectItem";
 import ExperienceItem from "./components/experienceItem";
 import { FaReact, FaPython, FaFileAudio } from "react-icons/fa";
@@ -35,7 +36,21 @@ export default function Home() {
         <div>
           <h2>Presenting,</h2>
           <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
-          <h2>Software Engineer, Tech Enthusiast</h2>
+          <h2>
+            <TypeAnimation
+              sequence={[
+                "Technology Enthusiast",
+                2000,
+                "Researcher",
+                2000,
+                "Software Engineer",
+                2000,
+              ]}
+              wrapper="span"
+              speed={50}
+              repeat={Infinity}
+            />
+          </h2>
           <h2>Student at Arizona State University</h2>
           <div className={styles.container2}>
             <motion.a
@@ -248,6 +263,13 @@ export default function Home() {
       </h1>
       <div className={styles.experienceContainer}>
         <ExperienceItem
+          title="Undergraduate Researcher"
+          company="VISA Research Lab, Arizona State University"
+          duration="December 2025 - Present"
+          description="Conducting research in collaboration with VISA Research Lab on cutting-edge SSD storage technology."
+          logoUrl="/logos/visa_research_lab_logo.jpg"
+        />
+        <ExperienceItem
           title="Software Engineering Intern"
           company="Defined Bioscience"
           duration="September 2025 - Present"
@@ -257,7 +279,7 @@ export default function Home() {
         <ExperienceItem
           title="Undergraduate Teaching Assistant - Operating Systems (Linux kernel, Ubuntu)"
           company="School of Computing and Augmented Intelligence, Arizona State University"
-          duration="August 2025 - Present"
+          duration="August 2025 - December 2025"
           description="Teaching assistant for operating systems course focusing on Linux kernel and Ubuntu."
           logoUrl="/logos/asuicon.jpg"
         />
