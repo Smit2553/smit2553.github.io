@@ -1,0 +1,29 @@
+:root {
+  background-color: #eeeeee;
+  color: #222831;
+  font-family: "JetBrains Mono", monospace;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+}

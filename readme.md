@@ -1,6 +1,6 @@
 # Smit's Personal Website
 
-This is the repository for my personal website, a portfolio built with Next.js to showcase my projects, experience, and skills.
+This is the repository for my personal website, a portfolio built with Vite and React to showcase my projects, experience, and skills.
 
 ## Functionality
 
@@ -14,7 +14,8 @@ The website serves as a central hub for my professional online presence. Key fea
 
 ## Technologies Used
 
-- **Next.js:** A React framework for building performant and SEO-friendly web applications.
+- **Vite:** A fast frontend build tool for local development and static production builds.
+- **React:** A component-based UI library for building the site.
 - **TypeScript:** A superset of JavaScript that adds static typing for improved code quality and maintainability.
 - **CSS Modules:** A CSS styling approach that encapsulates styles within components to avoid naming conflicts and improve modularity.
 
@@ -48,13 +49,13 @@ To run the website locally, follow these steps:
     npm install
     ```
 
-4.  **Run the development server:** Start the Next.js development server.
+4.  **Run the development server:** Start the Vite development server.
 
     ```bash
     npm run dev
     ```
 
-5.  **Access the website:** Open your web browser and navigate to `http://localhost:3000` to view the website.
+5.  **Access the website:** Open your web browser and navigate to `http://localhost:5173` to view the website.
 
 ## Contributing
 

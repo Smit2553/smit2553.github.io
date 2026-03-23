@@ -47,7 +47,7 @@
   color: #333;
 }
 
-.techStackItem .icon {
+.icon {
   margin-right: 0.5rem;
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
   margin-right: 10px;
 }
 
-.icon {
+.linkIcon {
   max-width: 100%;
   height: auto;
 }
@@ -82,17 +82,19 @@
   .projectContainer {
     flex-direction: column;
   }
+
   .image {
     max-width: 100%;
     position: relative;
     top: auto;
   }
+
   .contentContainer,
   .contentContainerReverse {
     margin-left: 0;
     padding-left: 0;
     padding-right: 0;
     border: none;
-    min-height: 0vh;
+    min-height: 0;
   }
 }

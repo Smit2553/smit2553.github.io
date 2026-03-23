@@ -1,7 +1,7 @@
-import React from "react";
-import styles from "./projectItem.module.css";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import type { ReactNode } from "react";
+import { useState } from "react";
+import styles from "./projectItem.module.css";
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -18,19 +18,21 @@ const staggerItem = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function ProjectItem(props: {
+type ProjectItemProps = {
   title: string;
   description: string;
   links?: {
     github?: string;
     live?: string;
   };
-  icons?: React.ReactNode[];
+  icons?: ReactNode[];
   techStack: string[];
   image: string;
   reverse?: boolean;
-}) {
-  const [isContainerVisible, setContainerVisible] = React.useState(false);
+};
+
+export default function ProjectItem(props: ProjectItemProps) {
+  const [isContainerVisible, setContainerVisible] = useState(false);
 
   return (
     <motion.div
@@ -59,16 +61,16 @@ export default function ProjectItem(props: {
         animate={isContainerVisible ? "show" : "hidden"}
       >
         <motion.h3 variants={staggerItem}>{props.title}</motion.h3>
-        {props.techStack && props.techStack.length > 0 && (
+        {props.techStack.length > 0 && (
           <motion.ul className={styles.techStackList} variants={staggerItem}>
             {props.techStack.map((tech, index) => (
               <motion.li
-                key={index}
+                key={tech}
                 className={styles.techStackItem}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                {props.icons && props.icons[index] && (
+                {props.icons?.[index] && (
                   <span className={styles.icon}>{props.icons[index]}</span>
                 )}
                 {tech}
@@ -82,21 +84,18 @@ export default function ProjectItem(props: {
             <motion.a
               href={props.links.github}
               target="_blank"
+              rel="noreferrer"
               className={styles.iconContainer}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               variants={staggerItem}
             >
-              <Image
+              <img
                 src="/icons/logo-github.svg"
                 alt="Github"
                 width={30}
                 height={30}
-                className={styles.icon}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                }}
+                className={styles.linkIcon}
               />
             </motion.a>
           )}
@@ -104,21 +103,18 @@ export default function ProjectItem(props: {
             <motion.a
               href={props.links.live}
               target="_blank"
+              rel="noreferrer"
               className={styles.iconContainer}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               variants={staggerItem}
             >
-              <Image
+              <img
                 src="/icons/logo-web.svg"
                 alt="Live Website"
                 width={30}
                 height={30}
-                className={styles.icon}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                }}
+                className={styles.linkIcon}
               />
             </motion.a>
           )}

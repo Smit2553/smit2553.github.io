@@ -1,41 +1,35 @@
-"use client";
-import Image from "next/image";
-import styles from "./page.module.css";
 import { motion } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
-import ProjectItem from "./components/projectItem";
-import ExperienceItem from "./components/experienceItem";
-import { FaReact, FaPython, FaFileAudio } from "react-icons/fa";
+import { FaFileAudio, FaPython, FaReact } from "react-icons/fa";
+import { GrGoogle } from "react-icons/gr";
 import { MdEmail } from "react-icons/md";
-import {
-  TbBrandThreejs,
-  TbBrandVite,
-  TbBrandReactNative,
-  TbBrandNextjs,
-  TbBrandFlutter,
-  TbSql,
-} from "react-icons/tb";
 import { RiTailwindCssFill } from "react-icons/ri";
 import {
-  SiTypescript,
-  SiFlask,
-  SiDart,
-  SiJavascript,
-  SiFastapi,
-  SiOpenai,
-  SiModal,
   SiElevenlabs,
+  SiFastapi,
+  SiFlask,
+  SiJavascript,
+  SiModal,
+  SiOpenai,
+  SiTypescript,
 } from "react-icons/si";
-import { GrGoogle } from "react-icons/gr";
-import { PiOpenAiLogo } from "react-icons/pi";
+import {
+  TbBrandReactNative,
+  TbBrandThreejs,
+  TbBrandVite,
+  TbSql,
+} from "react-icons/tb";
+import ExperienceItem from "./components/experienceItem";
+import ProjectItem from "./components/projectItem";
+import styles from "./App.module.css";
 
-export default function Home() {
+export default function App() {
   return (
     <div>
       <div className={styles.container}>
         <div>
           <h2>Presenting,</h2>
-          <h1 style={{ fontSize: "3rem" }}>Smit Devrukhkar</h1>
+          <h1 className={styles.title}>Smit Devrukhkar</h1>
           <h2>
             <TypeAnimation
               sequence={[
@@ -52,48 +46,42 @@ export default function Home() {
             />
           </h2>
           <h2>Student at Arizona State University</h2>
-          <div className={styles.container2}>
+          <div className={styles.socialLinks}>
             <motion.a
               href="https://github.com/Smit2553"
               target="_blank"
-              className={styles.iconContainer}
+              rel="noreferrer"
+              className={styles.iconLink}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Image
+              <img
                 src="/icons/logo-github.svg"
                 alt="Github"
                 width={30}
                 height={30}
                 className={styles.icon}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                }}
               />
             </motion.a>
 
             <motion.a
               href="https://www.linkedin.com/in/smitsd/"
               target="_blank"
-              className={styles.iconContainer}
+              rel="noreferrer"
+              className={styles.iconLink}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Image
+              <img
                 src="/icons/logo-linkedin.svg"
                 alt="LinkedIn"
                 width={30}
                 height={30}
                 className={styles.icon}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                }}
               />
             </motion.a>
           </div>
-          <div className={styles.container1}>
+          <div className={styles.navLinks}>
             <motion.a
               href="#projects"
               className={styles.link}
@@ -134,16 +122,15 @@ export default function Home() {
         </div>
 
         <div className={styles.imageContainer}>
-          <Image
-            className={styles.profilepicture}
+          <img
             src="/profilepicture.jpg"
-            alt="Picture of the author"
+            alt="Smit Devrukhkar"
             width={400}
             height={400}
-            priority
           />
         </div>
       </div>
+
       <div className={styles.moduleContainer}>
         <h1 className={styles.moduleTitle} id="projects">
           Projects
@@ -168,12 +155,12 @@ export default function Home() {
             "React Native",
           ]}
           icons={[
-            <GrGoogle size={30} key={1} />,
-            <SiOpenai size={30} key={2} />,
-            <SiModal size={30} key={3} />,
-            <SiFastapi size={30} key={4} />,
-            <TbSql size={30} key={5} />,
-            <TbBrandReactNative size={30} key={6} />,
+            <GrGoogle size={30} />,
+            <SiOpenai size={30} />,
+            <SiModal size={30} />,
+            <SiFastapi size={30} />,
+            <TbSql size={30} />,
+            <TbBrandReactNative size={30} />,
           ]}
         />
         <ProjectItem
@@ -186,10 +173,10 @@ export default function Home() {
           image="/offscript.png"
           techStack={["Elevenlabs", "Google Gemini", "FastAPI", "Vapi"]}
           icons={[
-            <SiElevenlabs size={30} key={1} />,
-            <GrGoogle size={30} key={1} />,
-            <SiFastapi size={30} key={2} />,
-            <FaFileAudio size={30} key={3} />,
+            <SiElevenlabs size={30} />,
+            <GrGoogle size={30} />,
+            <SiFastapi size={30} />,
+            <FaFileAudio size={30} />,
           ]}
         />
         <ProjectItem
@@ -202,10 +189,10 @@ export default function Home() {
           image="/sipnplaypicture.png"
           techStack={["React.js", "Three.js", "Tailwind CSS", "Vite"]}
           icons={[
-            <FaReact size={30} key={1} />,
-            <TbBrandThreejs size={30} key={2} />,
-            <RiTailwindCssFill size={30} key={3} />,
-            <TbBrandVite size={30} key={4} />,
+            <FaReact size={30} />,
+            <TbBrandThreejs size={30} />,
+            <RiTailwindCssFill size={30} />,
+            <TbBrandVite size={30} />,
           ]}
         />
         <ProjectItem
@@ -224,12 +211,12 @@ export default function Home() {
             "FastAPI",
           ]}
           icons={[
-            <FaReact size={30} key={1} />,
-            <SiJavascript size={30} key={2} />,
-            <RiTailwindCssFill size={30} key={3} />,
-            <TbBrandVite size={30} key={4} />,
-            <FaPython size={30} key={5} />,
-            <SiFastapi size={30} key={6} />,
+            <FaReact size={30} />,
+            <SiJavascript size={30} />,
+            <RiTailwindCssFill size={30} />,
+            <TbBrandVite size={30} />,
+            <FaPython size={30} />,
+            <SiFastapi size={30} />,
           ]}
           image="/HealthSync.jpg"
         />
@@ -239,10 +226,10 @@ export default function Home() {
           links={{ github: "https://github.com/Smit2553/Fiber" }}
           techStack={["React Native", "TypeScript", "Python", "Flask"]}
           icons={[
-            <TbBrandReactNative size={30} key={1} />,
-            <SiTypescript size={30} key={2} />,
-            <FaPython size={30} key={3} />,
-            <SiFlask size={30} key={4} />,
+            <TbBrandReactNative size={30} />,
+            <SiTypescript size={30} />,
+            <FaPython size={30} />,
+            <SiFlask size={30} />,
           ]}
           image="/fiberimage.jpg"
         />
@@ -251,16 +238,20 @@ export default function Home() {
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
           image="/personalwebsitepicture.jpg"
-          techStack={["Next.js", "TypeScript"]}
+          techStack={["Vite", "React", "TypeScript"]}
           icons={[
-            <TbBrandNextjs size={30} key={1} />,
-            <SiTypescript size={30} key={2} />,
+            <TbBrandVite size={30} />,
+            <FaReact size={30} />,
+            <SiTypescript size={30} />,
           ]}
         />
       </div>
-      <h1 className={styles.moduleTitle} id="experience">
-        Experience
-      </h1>
+
+      <div className={styles.moduleContainer}>
+        <h1 className={styles.moduleTitle} id="experience">
+          Experience
+        </h1>
+      </div>
       <div className={styles.experienceContainer}>
         <ExperienceItem
           title="Undergraduate Researcher"

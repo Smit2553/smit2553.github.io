@@ -1,5 +1,13 @@
-import styles from "./experienceItem.module.css";
 import { motion } from "framer-motion";
+import styles from "./experienceItem.module.css";
+
+type ExperienceItemProps = {
+  title: string;
+  company: string;
+  duration: string;
+  description: string;
+  logoUrl: string;
+};
 
 export default function ExperienceItem({
   title,
@@ -7,14 +15,7 @@ export default function ExperienceItem({
   duration,
   description,
   logoUrl,
-}: {
-  title: string;
-  company: string;
-  duration: string;
-  description: string;
-  logoUrl: string; // Added logo prop
-}) {
-  // Animation variants
+}: ExperienceItemProps) {
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
