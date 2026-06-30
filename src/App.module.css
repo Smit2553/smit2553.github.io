@@ -26,7 +26,9 @@
 .navLinks {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .socialLinks {
@@ -78,11 +80,19 @@
 }
 
 .link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #eeeeee;
   background-color: #76abae;
   padding: 5px;
   border-radius: 5px;
   text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.link:hover {
+  opacity: 0.85;
 }
 
 .imageContainer {

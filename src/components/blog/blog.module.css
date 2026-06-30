@@ -1,0 +1,409 @@
+.page {
+  padding: 2rem 1rem 4rem;
+}
+
+.pageInner,
+.articleShell,
+.sectionInner {
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pageInner,
+.sectionInner {
+  max-width: 1200px;
+}
+
+.articleShell {
+  max-width: 900px;
+}
+
+.sectionInner,
+.articleShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pageHeader,
+.sectionHeader,
+.articleHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.sectionHeader {
+  margin-bottom: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #76abae;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pageTitle,
+.sectionTitle,
+.articleTitle {
+  margin: 0;
+  line-height: 1.05;
+}
+
+.pageTitle,
+.articleTitle {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+}
+
+.sectionTitle {
+  font-size: 3rem;
+  text-align: center;
+}
+
+.pageLead,
+.sectionLead,
+.articleSummary,
+.statusText,
+.emptyText,
+.postCardExcerpt {
+  color: #444;
+  line-height: 1.75;
+}
+
+.pageLead,
+.articleSummary {
+  max-width: 70ch;
+}
+
+.sectionLead {
+  margin: 0 auto;
+  max-width: 70ch;
+  text-align: center;
+}
+
+.pageActions,
+.sectionActions,
+.statusActions,
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pageActions {
+  margin-top: 0.25rem;
+}
+
+.sectionActions,
+.emptyActions {
+  justify-content: center;
+}
+
+.buttonLink,
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #76abae;
+  color: #eeeeee;
+  border-radius: 5px;
+  padding: 0.65rem 1rem;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  width: fit-content;
+}
+
+.buttonLink:hover,
+.backLink:hover {
+  opacity: 0.85;
+}
+
+.cardGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.cardGridList {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.postCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 100%;
+  padding: 1.25rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: #222831;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.postCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.postCardMeta,
+.articleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  color: #667;
+  font-size: 0.9rem;
+}
+
+.postCardDate,
+.articleDate {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(118, 171, 174, 0.12);
+  color: #3d6568;
+}
+
+.postCardTitle {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.postCardExcerpt {
+  margin: 0;
+}
+
+.postCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: auto;
+  color: #76abae;
+  font-weight: 700;
+}
+
+.postCardArrow {
+  font-size: 1.1rem;
+}
+
+.statusCard,
+.emptyState {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.emptyState {
+  text-align: center;
+}
+
+.statusTitle,
+.emptyTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+.statusText,
+.emptyText {
+  margin: 0;
+}
+
+.articleShell {
+  padding: 2rem 0 4rem;
+}
+
+.articleHeader {
+  margin-bottom: 0;
+}
+
+.articleContent {
+  padding: 1.25rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.markdown {
+  display: grid;
+  gap: 1rem;
+  color: #222831;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.markdown > * {
+  margin: 0;
+}
+
+.markdown h1 {
+  margin-top: 1.5rem;
+  font-size: 2.25rem;
+  line-height: 1.15;
+}
+
+.markdown h2 {
+  margin-top: 1.5rem;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.markdown h3 {
+  margin-top: 1.25rem;
+  font-size: 1.4rem;
+  line-height: 1.25;
+}
+
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.markdown p {
+  color: #333;
+}
+
+.markdown a {
+  color: #76abae;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.markdown a:hover {
+  opacity: 0.85;
+}
+
+.markdown strong {
+  color: #222831;
+}
+
+.markdown em {
+  color: #333;
+}
+
+.markdown ul,
+.markdown ol {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.markdown li > p {
+  margin: 0.25rem 0;
+}
+
+.markdown blockquote {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #76abae;
+  border-radius: 10px;
+  background: rgba(118, 171, 174, 0.12);
+  color: #3f4b4c;
+}
+
+.markdown code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.95em;
+}
+
+.markdown :not(pre) > code {
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  background: rgba(34, 40, 49, 0.08);
+}
+
+.markdown pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #222831;
+  color: #eeeeee;
+}
+
+.markdown pre code {
+  display: block;
+  background: transparent;
+  color: inherit;
+  white-space: pre;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.markdown table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.markdown th,
+.markdown td {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(34, 40, 49, 0.15);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown th {
+  background: rgba(118, 171, 174, 0.12);
+}
+
+.markdown hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid rgba(34, 40, 49, 0.15);
+}
+
+.markdown img {
+  max-width: 100%;
+  border-radius: 12px;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding-top: 1.5rem;
+  }
+
+  .sectionTitle {
+    font-size: 2.25rem;
+  }
+
+  .pageTitle,
+  .articleTitle {
+    font-size: 2.25rem;
+  }
+
+  .postCard,
+  .articleContent,
+  .statusCard,
+  .emptyState {
+    padding: 1rem;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

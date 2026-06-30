@@ -49,6 +49,20 @@ type SqlValue = string | number | bigint | null;
 
 let database: DatabaseSync | null = null;
 
+export interface PublishedBlogPostSummaryRow {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublishedBlogPostDetailRow extends PublishedBlogPostSummaryRow {
+  content: string;
+}
+
 const schemaSql = `
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY,
@@ -154,6 +168,10 @@ function queryOne<T>(sql: string, params: SqlValue[] = []): T | undefined {
   return getDatabase().prepare(sql).get(...params) as T | undefined;
 }
 
+function queryAll<T>(sql: string, params: SqlValue[] = []): T[] {
+  return getDatabase().prepare(sql).all(...params) as T[];
+}
+
 function run(sql: string, params: SqlValue[] = []): void {
   getDatabase().prepare(sql).run(...params);
 }
@@ -247,4 +265,42 @@ export function revokeSessionsByAdminUserId(adminUserId: string, revokedAt: stri
 
 export function deleteExpiredSessions(nowIso: string): void {
   run("DELETE FROM sessions WHERE expires_at <= ?", [nowIso]);
+}
+
+export function getPublishedBlogPosts(limit?: number): PublishedBlogPostSummaryRow[] {
+  const sql = `SELECT
+      id,
+      slug,
+      title,
+      summary,
+      published_at,
+      created_at,
+      updated_at
+    FROM posts
+    WHERE status = 'published'
+    ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC`;
+
+  if (typeof limit === "number") {
+    return queryAll<PublishedBlogPostSummaryRow>(`${sql} LIMIT ?`, [limit]);
+  }
+
+  return queryAll<PublishedBlogPostSummaryRow>(sql);
+}
+
+export function getPublishedBlogPostBySlug(slug: string): PublishedBlogPostDetailRow | undefined {
+  return queryOne<PublishedBlogPostDetailRow>(
+    `SELECT
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      published_at,
+      created_at,
+      updated_at
+    FROM posts
+    WHERE slug = ? AND status = 'published'
+    LIMIT 1`,
+    [slug],
+  );
 }
