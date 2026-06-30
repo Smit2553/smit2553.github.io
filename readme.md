@@ -1,6 +1,6 @@
 # Smit's Personal Website
 
-This is the repository for my personal website, a portfolio built with Vite and React to showcase my projects, experience, and skills.
+This is the repository for my personal website, a portfolio built with Vite, React, and a same-repo Node backend to showcase my projects, experience, and skills.
 
 ## Functionality
 
@@ -14,9 +14,10 @@ The website serves as a central hub for my professional online presence. Key fea
 
 ## Technologies Used
 
-- **Vite:** A fast frontend build tool for local development and static production builds.
+- **Vite:** A fast frontend build tool for the client application.
 - **React:** A component-based UI library for building the site.
 - **TypeScript:** A superset of JavaScript that adds static typing for improved code quality and maintainability.
+- **Node.js + Express:** Backend runtime and API layer for same-repo full-stack features.
 - **CSS Modules:** A CSS styling approach that encapsulates styles within components to avoid naming conflicts and improve modularity.
 
 ## Color Palette
@@ -25,7 +26,7 @@ The color palette for the website can be found at [https://colorhunt.co/palette/
 
 ## Demo
 
-The website is live and self-hosted at [smit.codestacx.com](https://smit.codestacx.com).
+The website is live and self-hosted at [smit-dev.codestacx.com](https://smit-dev.codestacx.com).
 
 ## Development
 
@@ -49,13 +50,15 @@ To run the website locally, follow these steps:
     npm install
     ```
 
-4.  **Run the development server:** Start the Vite development server.
+4.  **Run the development servers:** Start the Vite client and the Node backend together.
 
     ```bash
     npm run dev
     ```
 
-5.  **Access the website:** Open your web browser and navigate to `http://localhost:5173` to view the website.
+    You can also run them separately with `npm run dev:client` and `npm run dev:server`.
+
+5.  **Access the website:** Open your web browser and navigate to `http://localhost:5173` to view the website. Client API requests are proxied to the backend on `http://localhost:3001` by default.
 
 ## Contributing
 
