@@ -1,12 +1,17 @@
 import express from "express";
 import path from "node:path";
+import adminRouter from "./routes/admin";
 import { clientDistPath, clientIndexPath } from "./config";
 
 export const app = express();
 
+app.use(express.json({ limit: "32kb" }));
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/api/admin", adminRouter);
 
 app.use(express.static(clientDistPath));
 
