@@ -11,6 +11,7 @@ import {
   type ReplySeed,
   type ReplyWithPostRow,
 } from "./storage";
+import { normalizeNullableText, normalizeText } from "./normalize";
 
 export type ReplyStatus = "pending" | "approved" | "rejected";
 
@@ -166,7 +167,7 @@ function toReplyStatus(value: string): ReplyStatus {
 function toPublicReply(row: ReplyRow): PublicReply {
   return {
     id: row.id,
-    authorName: row.author_name,
+    authorName: normalizeText(row.author_name),
     body: row.body,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -178,17 +179,17 @@ function toAdminReply(row: ReplyWithPostRow): AdminReply {
     id: row.id,
     post: {
       id: row.post_id,
-      slug: row.post_slug,
-      title: row.post_title,
-      summary: row.post_summary,
+      slug: normalizeText(row.post_slug),
+      title: normalizeText(row.post_title),
+      summary: normalizeNullableText(row.post_summary),
       status: row.post_status,
       publishedAt: row.post_published_at,
       createdAt: row.post_created_at,
       updatedAt: row.post_updated_at,
     },
     parentReplyId: row.parent_reply_id,
-    authorName: row.author_name,
-    authorEmail: row.author_email,
+    authorName: normalizeText(row.author_name),
+    authorEmail: normalizeNullableText(row.author_email),
     body: row.body,
     status: toReplyStatus(row.status),
     createdAt: row.created_at,

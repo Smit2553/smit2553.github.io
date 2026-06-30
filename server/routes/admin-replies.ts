@@ -1,11 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import { deleteAdminReply, listAdminReplies, ReplyError, updateAdminReplyStatus } from "../replies";
+import { readRouteParam } from "./params";
 
 const adminRepliesRouter = Router();
-
-function readReplyIdParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] ?? "" : value;
-}
 
 function respondWithAdminReplyError(response: Response, error: unknown): void {
   if (error instanceof ReplyError) {
@@ -26,7 +23,7 @@ adminRepliesRouter.get("/", (_request: Request, response: Response) => {
 
 adminRepliesRouter.patch("/:id", (request: Request, response: Response) => {
   try {
-    updateAdminReplyStatus(readReplyIdParam(request.params.id), request.body);
+    updateAdminReplyStatus(readRouteParam(request.params.id), request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminReplyError(response, error);
@@ -35,7 +32,7 @@ adminRepliesRouter.patch("/:id", (request: Request, response: Response) => {
 
 adminRepliesRouter.delete("/:id", (request: Request, response: Response) => {
   try {
-    deleteAdminReply(readReplyIdParam(request.params.id));
+    deleteAdminReply(readRouteParam(request.params.id));
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminReplyError(response, error);

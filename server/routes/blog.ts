@@ -11,16 +11,9 @@ import {
   listPublishedBlogRepliesBySlug,
   ReplyError,
 } from "../replies";
+import { readPositiveIntegerQueryParam, readRouteParam } from "./params";
 
 const blogRouter = Router();
-
-function readSlugParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] ?? "" : value;
-}
-
-function readPostIdParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] ?? "" : value;
-}
 
 function respondWithBlogError(response: Response, error: unknown, fallbackMessage: string): void {
   if (error instanceof BlogError) {
@@ -42,24 +35,11 @@ function respondWithReplyError(response: Response, error: unknown, fallbackMessa
 
 blogRouter.get("/", (request: Request, response: Response) => {
   try {
-    const { limit } = request.query;
+    const parsedLimit = readPositiveIntegerQueryParam(request.query.limit);
 
-    if (Array.isArray(limit)) {
+    if (parsedLimit === null) {
       response.status(400).json({ error: "limit must be a positive integer." });
       return;
-    }
-
-    let parsedLimit: number | undefined;
-
-    if (typeof limit === "string" && limit.length > 0) {
-      const numericLimit = Number(limit);
-
-      if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
-        response.status(400).json({ error: "limit must be a positive integer." });
-        return;
-      }
-
-      parsedLimit = numericLimit;
     }
 
     const posts = listPublishedBlogPosts(parsedLimit);
@@ -72,7 +52,7 @@ blogRouter.get("/", (request: Request, response: Response) => {
 
 blogRouter.get("/:slug", (request: Request, response: Response) => {
   try {
-    const slug = readSlugParam(request.params.slug).trim();
+    const slug = readRouteParam(request.params.slug);
 
     if (slug.length === 0) {
       response.status(400).json({ error: "Slug is required." });
@@ -94,7 +74,7 @@ blogRouter.get("/:slug", (request: Request, response: Response) => {
 
 blogRouter.get("/:slug/replies", (request: Request, response: Response) => {
   try {
-    const slug = readSlugParam(request.params.slug);
+    const slug = readRouteParam(request.params.slug);
     const replies = listPublishedBlogRepliesBySlug(slug);
 
     response.json({ replies });
@@ -105,7 +85,7 @@ blogRouter.get("/:slug/replies", (request: Request, response: Response) => {
 
 blogRouter.post("/:slug/replies", (request: Request, response: Response) => {
   try {
-    const slug = readSlugParam(request.params.slug);
+    const slug = readRouteParam(request.params.slug);
 
     createPublishedBlogReplyBySlug(slug, request.body);
     response.json({ ok: true });
@@ -116,7 +96,7 @@ blogRouter.post("/:slug/replies", (request: Request, response: Response) => {
 
 function handleLikeRequest(request: Request, response: Response): void {
   try {
-    const slug = readSlugParam(request.params.slug);
+    const slug = readRouteParam(request.params.slug);
     const result = likePublishedBlogPostBySlug(slug, request.body);
 
     response.json(result);
@@ -127,7 +107,7 @@ function handleLikeRequest(request: Request, response: Response): void {
 
 function handleLikeRequestById(request: Request, response: Response): void {
   try {
-    const id = readPostIdParam(request.params.id);
+    const id = readRouteParam(request.params.id);
     const result = likePublishedBlogPostById(id, request.body);
 
     response.json(result);

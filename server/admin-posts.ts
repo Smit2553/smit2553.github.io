@@ -9,6 +9,7 @@ import {
   type AdminPostRow,
   type AdminPostSeed,
 } from "./storage";
+import { normalizeNullableText, normalizeText } from "./normalize";
 
 export interface AdminPostSummary {
   id: string;
@@ -138,9 +139,9 @@ function isSlugConstraintError(error: unknown): boolean {
 function toAdminPostSummary(row: AdminPostRow): AdminPostSummary {
   return {
     id: row.id,
-    slug: row.slug,
-    title: row.title,
-    summary: row.summary,
+    slug: normalizeText(row.slug),
+    title: normalizeText(row.title),
+    summary: normalizeNullableText(row.summary),
     status: row.status,
     publishedAt: row.published_at,
     createdAt: row.created_at,
@@ -158,9 +159,9 @@ function toAdminPostDetail(row: AdminPostRow): AdminPostDetail {
 function toAdminPostDetailFromValues(values: AdminPostSeed): AdminPostDetail {
   return {
     id: values.id,
-    slug: values.slug,
-    title: values.title,
-    summary: values.summary,
+    slug: normalizeText(values.slug),
+    title: normalizeText(values.title),
+    summary: normalizeNullableText(values.summary),
     status: values.status,
     publishedAt: values.publishedAt,
     createdAt: values.createdAt,

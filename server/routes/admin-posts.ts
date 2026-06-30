@@ -7,12 +7,9 @@ import {
   readAdminPostById,
   updateAdminPost,
 } from "../admin-posts";
+import { readRouteParam } from "./params";
 
 const adminPostsRouter = Router();
-
-function readPostIdParam(value: string | string[]): string {
-  return Array.isArray(value) ? value[0] ?? "" : value;
-}
 
 function respondWithAdminPostError(response: Response, error: unknown): void {
   if (error instanceof AdminPostError) {
@@ -33,7 +30,7 @@ adminPostsRouter.get("/", (_request: Request, response: Response) => {
 
 adminPostsRouter.get("/:id", (request: Request, response: Response) => {
   try {
-    const post = readAdminPostById(readPostIdParam(request.params.id));
+    const post = readAdminPostById(readRouteParam(request.params.id));
 
     if (!post) {
       response.status(404).json({ error: "Post not found." });
@@ -57,7 +54,7 @@ adminPostsRouter.post("/", (request: Request, response: Response) => {
 
 adminPostsRouter.patch("/:id", (request: Request, response: Response) => {
   try {
-    updateAdminPost(readPostIdParam(request.params.id), request.body);
+    updateAdminPost(readRouteParam(request.params.id), request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminPostError(response, error);
@@ -66,7 +63,7 @@ adminPostsRouter.patch("/:id", (request: Request, response: Response) => {
 
 adminPostsRouter.delete("/:id", (request: Request, response: Response) => {
   try {
-    deleteAdminPost(readPostIdParam(request.params.id));
+    deleteAdminPost(readRouteParam(request.params.id));
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminPostError(response, error);

@@ -1,22 +1,13 @@
-# Blog Migration Plan
+# Blog Runtime Notes
 
-Phase 2 keeps the blog inside this repo with a Node backend and a Vite frontend. The browser talks to backend `/api/*` endpoints only.
+The blog, likes, replies, and admin routes stay in this repo behind the `/api/*` contract.
 
-## Architecture
-- `src/` remains the client app and renders the portfolio plus blog UI.
-- `server/` owns the API and persistence.
-- SQLite is the Phase 2 database.
-- Admin auth and sessions live in the backend so later phases can swap storage without changing the client contract.
-- Supabase comes later behind the same API, without changing the client contract.
+## Local Auth
+- `BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 npm run dev`
+- Fallback admin creds: `admin` / `admin-dev-only`
+- Without that flag, set `BLOG_ADMIN_USERNAME` and `BLOG_ADMIN_PASSWORD`
 
-## Rules
-- Do not read or write Supabase directly from the frontend.
-- Keep a single admin login for later; backend write routes stay internal until then.
-- Run local dev with `BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 npm run dev` to use the fallback admin credentials (`BLOG_ADMIN_USERNAME=admin`, `BLOG_ADMIN_PASSWORD=admin-dev-only`); otherwise both admin env vars are required.
-- Preserve likes, replies, and drafts in the backend schema from day one so they migrate intact.
-
-## Migration
-1. Serve blog data from backend `/api/*` endpoints only.
-2. Store posts, drafts, likes, replies, and metadata in SQLite now.
-3. Migrate the same records to Supabase later behind the API.
-4. Keep client routes and payload shapes stable across the storage swap.
+## Runtime
+- `npm run build` produces `dist/` and `server-dist/`
+- `npm start` runs `server-dist/index.js`
+- SQLite defaults to `data/blog.sqlite`; override with `BLOG_SQLITE_PATH` or `DATABASE_PATH`

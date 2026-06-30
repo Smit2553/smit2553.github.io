@@ -13,20 +13,28 @@ import adminPostsRouter from "./admin-posts";
 
 const adminRouter = Router();
 
-adminRouter.post("/login", (request: Request, response: Response) => {
-  const body = (request.body ?? {}) as { username?: unknown; password?: unknown };
+function isLoginPayload(body: unknown): body is { username?: unknown; password?: unknown } {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return false;
+  }
 
-  if (typeof body.username !== "string" || typeof body.password !== "string") {
+  return true;
+}
+
+adminRouter.post("/login", (request: Request, response: Response) => {
+  if (!isLoginPayload(request.body)) {
+    response.status(400).json({ error: "Username and password are required." });
+    return;
+  }
+
+  const body = request.body;
+
+  if (typeof body.username !== "string" || body.username.trim().length === 0 || typeof body.password !== "string" || body.password.length === 0) {
     response.status(400).json({ error: "Username and password are required." });
     return;
   }
 
   const username = body.username.trim();
-
-  if (username.length === 0) {
-    response.status(400).json({ error: "Username and password are required." });
-    return;
-  }
 
   const login = loginAdmin(username, body.password);
 
