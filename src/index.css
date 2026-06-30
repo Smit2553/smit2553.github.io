@@ -24,6 +24,14 @@ a {
   color: inherit;
 }
 
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
 img {
   display: block;
 }

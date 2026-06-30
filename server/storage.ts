@@ -63,6 +63,30 @@ export interface PublishedBlogPostDetailRow extends PublishedBlogPostSummaryRow 
   content: string;
 }
 
+export interface AdminPostRow {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  content: string;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminPostSeed {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  content: string;
+  status: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const schemaSql = `
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY,
@@ -303,4 +327,112 @@ export function getPublishedBlogPostBySlug(slug: string): PublishedBlogPostDetai
     LIMIT 1`,
     [slug],
   );
+}
+
+export function getAdminPosts(): AdminPostRow[] {
+  return queryAll<AdminPostRow>(`SELECT
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      status,
+      published_at,
+      created_at,
+      updated_at
+    FROM posts
+    ORDER BY updated_at DESC, created_at DESC, id DESC`);
+}
+
+export function getAdminPostById(id: string): AdminPostRow | undefined {
+  return queryOne<AdminPostRow>(
+    `SELECT
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      status,
+      published_at,
+      created_at,
+      updated_at
+    FROM posts
+    WHERE id = ?
+    LIMIT 1`,
+    [id],
+  );
+}
+
+export function getAdminPostBySlug(slug: string): AdminPostRow | undefined {
+  return queryOne<AdminPostRow>(
+    `SELECT
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      status,
+      published_at,
+      created_at,
+      updated_at
+    FROM posts
+    WHERE slug = ?
+    LIMIT 1`,
+    [slug],
+  );
+}
+
+export function insertAdminPost(seed: AdminPostSeed): void {
+  run(
+    `INSERT INTO posts (
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      status,
+      published_at,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      seed.id,
+      seed.slug,
+      seed.title,
+      seed.summary,
+      seed.content,
+      seed.status,
+      seed.publishedAt,
+      seed.createdAt,
+      seed.updatedAt,
+    ],
+  );
+}
+
+export function updateAdminPost(seed: AdminPostSeed): void {
+  run(
+    `UPDATE posts SET
+      slug = ?,
+      title = ?,
+      summary = ?,
+      content = ?,
+      status = ?,
+      published_at = ?,
+      updated_at = ?
+    WHERE id = ?`,
+    [
+      seed.slug,
+      seed.title,
+      seed.summary,
+      seed.content,
+      seed.status,
+      seed.publishedAt,
+      seed.updatedAt,
+      seed.id,
+    ],
+  );
+}
+
+export function deleteAdminPostById(id: string): void {
+  run("DELETE FROM posts WHERE id = ?", [id]);
 }
