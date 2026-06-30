@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import BlogLikeButton from "../components/blog/BlogLikeButton";
+import BlogRepliesSection from "../components/blog/BlogRepliesSection";
 import MarkdownContent from "../components/blog/MarkdownContent";
 import styles from "../components/blog/blog.module.css";
 import {
@@ -161,6 +162,8 @@ export default function BlogPostPage() {
         <div className={styles.articleContent}>
           <MarkdownContent content={post.content} />
         </div>
+
+        <BlogRepliesSection postTitle={post.title} slug={post.slug} />
       </article>
     </main>
   );

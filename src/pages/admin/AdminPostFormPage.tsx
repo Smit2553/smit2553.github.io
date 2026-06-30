@@ -322,6 +322,9 @@ export default function AdminPostFormPage() {
       <Link className={`${styles.button} ${styles.buttonSecondary}`} to="/admin/posts">
         Back to posts
       </Link>
+      <Link className={`${styles.button} ${styles.buttonSecondary}`} to="/admin/replies">
+        Replies
+      </Link>
       <Link className={`${styles.button} ${styles.buttonSecondary}`} to="/">
         View site
       </Link>

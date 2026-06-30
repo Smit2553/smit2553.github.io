@@ -166,6 +166,14 @@
   font-style: italic;
 }
 
+.replyBody {
+  margin: 0;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #222831;
+}
+
 .formActions,
 .postActions {
   display: flex;
@@ -310,6 +318,11 @@
 .badgePublished {
   background-color: rgba(118, 171, 174, 0.14);
   color: #3d6568;
+}
+
+.badgeRejected {
+  background-color: rgba(139, 76, 76, 0.12);
+  color: #8b4c4c;
 }
 
 .slug {

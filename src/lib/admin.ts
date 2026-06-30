@@ -1,5 +1,9 @@
 export type AdminPostStatus = "draft" | "published";
 
+export type AdminReplyStatus = "pending" | "approved" | "rejected";
+
+export type AdminReplyModerationStatus = Exclude<AdminReplyStatus, "pending">;
+
 export interface AdminPostSummary {
   id: string;
   slug: string;
@@ -23,6 +27,29 @@ export interface AdminPostInput {
   status: AdminPostStatus;
 }
 
+export interface AdminReplyPost {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  status: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReply {
+  id: string;
+  post: AdminReplyPost;
+  parentReplyId: string | null;
+  authorName: string;
+  authorEmail: string | null;
+  body: string;
+  status: AdminReplyStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class AdminApiError extends Error {
   status: number;
 
@@ -39,6 +66,10 @@ type AdminPostsResponse = {
 
 type AdminPostResponse = {
   post: AdminPost;
+};
+
+type AdminRepliesResponse = {
+  replies: AdminReply[];
 };
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -76,6 +107,16 @@ function readErrorMessage(body: unknown, fallbackMessage: string): string {
 
   return fallbackMessage;
 }
+
+const adminTimestampFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+  timeZoneName: "short",
+});
 
 async function requestAdmin(path: string, init: RequestInit = {}, fallbackMessage = "Unable to load admin data."): Promise<unknown> {
   const headers = new Headers(init.headers);
@@ -164,6 +205,45 @@ export async function deleteAdminPost(id: string): Promise<void> {
     { method: "DELETE" },
     "Unable to delete the post.",
   );
+}
+
+export async function fetchAdminReplies(): Promise<AdminReply[]> {
+  const response = (await requestAdmin(
+    "/api/admin/replies",
+    { method: "GET" },
+    "Unable to load replies.",
+  )) as AdminRepliesResponse;
+
+  return response.replies;
+}
+
+export async function updateAdminReplyStatus(id: string, status: AdminReplyModerationStatus): Promise<void> {
+  await requestAdmin(
+    `/api/admin/replies/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    },
+    "Unable to update the reply.",
+  );
+}
+
+export async function deleteAdminReply(id: string): Promise<void> {
+  await requestAdmin(
+    `/api/admin/replies/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    "Unable to delete the reply.",
+  );
+}
+
+export function formatAdminTimestamp(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return adminTimestampFormatter.format(date);
 }
 
 export function getAdminErrorMessage(error: unknown): string {

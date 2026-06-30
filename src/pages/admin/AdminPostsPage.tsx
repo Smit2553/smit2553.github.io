@@ -150,6 +150,9 @@ export default function AdminPostsPage() {
           <Link className={`${styles.button} ${styles.buttonSecondary}`} to="/">
             View site
           </Link>
+          <Link className={`${styles.button} ${styles.buttonSecondary}`} to="/admin/replies">
+            Replies
+          </Link>
           <Link className={styles.button} to="/admin/posts/new">
             New post
           </Link>

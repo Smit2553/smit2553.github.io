@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           Back home
         </Link>
       )}
-      lead="Use the admin session cookie to manage drafts and published posts."
+      lead="Use the admin session cookie to manage drafts, published posts, and replies."
       title="Sign in"
     >
       <section className={`${styles.panel} ${styles.loginPanel}`}>

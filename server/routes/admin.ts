@@ -8,6 +8,7 @@ import {
   setAdminSessionCookie,
   type AdminAuthContext,
 } from "../auth";
+import adminRepliesRouter from "./admin-replies";
 import adminPostsRouter from "./admin-posts";
 
 const adminRouter = Router();
@@ -54,5 +55,6 @@ adminRouter.get("/health", requireAdminAuth, (_request: Request, response: Respo
 });
 
 adminRouter.use("/posts", requireAdminAuth, adminPostsRouter);
+adminRouter.use("/replies", requireAdminAuth, adminRepliesRouter);
 
 export default adminRouter;

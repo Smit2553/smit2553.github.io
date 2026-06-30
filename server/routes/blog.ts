@@ -6,6 +6,11 @@ import {
   listPublishedBlogPosts,
   readPublishedBlogPostBySlug,
 } from "../blog";
+import {
+  createPublishedBlogReplyBySlug,
+  listPublishedBlogRepliesBySlug,
+  ReplyError,
+} from "../replies";
 
 const blogRouter = Router();
 
@@ -19,6 +24,15 @@ function readPostIdParam(value: string | string[]): string {
 
 function respondWithBlogError(response: Response, error: unknown, fallbackMessage: string): void {
   if (error instanceof BlogError) {
+    response.status(error.status).json({ error: error.message });
+    return;
+  }
+
+  response.status(500).json({ error: fallbackMessage });
+}
+
+function respondWithReplyError(response: Response, error: unknown, fallbackMessage: string): void {
+  if (error instanceof ReplyError) {
     response.status(error.status).json({ error: error.message });
     return;
   }
@@ -75,6 +89,28 @@ blogRouter.get("/:slug", (request: Request, response: Response) => {
     response.json({ post });
   } catch (error) {
     respondWithBlogError(response, error, "Unable to load blog content.");
+  }
+});
+
+blogRouter.get("/:slug/replies", (request: Request, response: Response) => {
+  try {
+    const slug = readSlugParam(request.params.slug);
+    const replies = listPublishedBlogRepliesBySlug(slug);
+
+    response.json({ replies });
+  } catch (error) {
+    respondWithReplyError(response, error, "Unable to load replies.");
+  }
+});
+
+blogRouter.post("/:slug/replies", (request: Request, response: Response) => {
+  try {
+    const slug = readSlugParam(request.params.slug);
+
+    createPublishedBlogReplyBySlug(slug, request.body);
+    response.json({ ok: true });
+  } catch (error) {
+    respondWithReplyError(response, error, "Unable to submit reply.");
   }
 });
 

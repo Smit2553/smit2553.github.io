@@ -52,6 +52,40 @@ export interface BlogLikeSeed {
   createdAt: string;
 }
 
+export interface ReplyRow {
+  id: string;
+  post_id: string;
+  parent_reply_id: string | null;
+  author_name: string;
+  author_email: string | null;
+  body: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReplyWithPostRow extends ReplyRow {
+  post_slug: string;
+  post_title: string;
+  post_summary: string | null;
+  post_status: string;
+  post_published_at: string | null;
+  post_created_at: string;
+  post_updated_at: string;
+}
+
+export interface ReplySeed {
+  id: string;
+  postId: string;
+  parentReplyId: string | null;
+  authorName: string;
+  authorEmail: string | null;
+  body: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type SqlValue = string | number | bigint | null;
 
 let database: DatabaseSync | null = null;
@@ -377,6 +411,128 @@ export function createBlogLike(seed: BlogLikeSeed): boolean {
     .run(seed.id, seed.postId, seed.visitorKey, seed.createdAt);
 
   return result.changes > 0;
+}
+
+export function getReplyById(id: string): ReplyRow | undefined {
+  return queryOne<ReplyRow>(
+    `SELECT
+      id,
+      post_id,
+      parent_reply_id,
+      author_name,
+      author_email,
+      body,
+      status,
+      created_at,
+      updated_at
+    FROM replies
+    WHERE id = ?
+    LIMIT 1`,
+    [id],
+  );
+}
+
+export function getRepliesByPostId(postId: string): ReplyRow[] {
+  return queryAll<ReplyRow>(
+    `SELECT
+      id,
+      post_id,
+      parent_reply_id,
+      author_name,
+      author_email,
+      body,
+      status,
+      created_at,
+      updated_at
+    FROM replies
+    WHERE post_id = ?
+    ORDER BY created_at ASC, id ASC`,
+    [postId],
+  );
+}
+
+export function getRepliesByPostIdAndStatus(postId: string, status: string): ReplyRow[] {
+  return queryAll<ReplyRow>(
+    `SELECT
+      id,
+      post_id,
+      parent_reply_id,
+      author_name,
+      author_email,
+      body,
+      status,
+      created_at,
+      updated_at
+    FROM replies
+    WHERE post_id = ? AND status = ?
+    ORDER BY created_at ASC, id ASC`,
+    [postId, status],
+  );
+}
+
+export function getAdminReplies(): ReplyWithPostRow[] {
+  return queryAll<ReplyWithPostRow>(
+    `SELECT
+      replies.id AS id,
+      replies.post_id AS post_id,
+      replies.parent_reply_id AS parent_reply_id,
+      replies.author_name AS author_name,
+      replies.author_email AS author_email,
+      replies.body AS body,
+      replies.status AS status,
+      replies.created_at AS created_at,
+      replies.updated_at AS updated_at,
+      posts.slug AS post_slug,
+      posts.title AS post_title,
+      posts.summary AS post_summary,
+      posts.status AS post_status,
+      posts.published_at AS post_published_at,
+      posts.created_at AS post_created_at,
+      posts.updated_at AS post_updated_at
+    FROM replies
+    INNER JOIN posts ON posts.id = replies.post_id
+    ORDER BY CASE replies.status
+      WHEN 'pending' THEN 0
+      WHEN 'approved' THEN 1
+      WHEN 'rejected' THEN 2
+      ELSE 3
+    END, replies.created_at DESC, replies.id DESC`,
+  );
+}
+
+export function insertReply(seed: ReplySeed): void {
+  run(
+    `INSERT INTO replies (
+      id,
+      post_id,
+      parent_reply_id,
+      author_name,
+      author_email,
+      body,
+      status,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      seed.id,
+      seed.postId,
+      seed.parentReplyId,
+      seed.authorName,
+      seed.authorEmail,
+      seed.body,
+      seed.status,
+      seed.createdAt,
+      seed.updatedAt,
+    ],
+  );
+}
+
+export function updateReplyStatus(id: string, status: string, updatedAt: string): void {
+  run("UPDATE replies SET status = ?, updated_at = ? WHERE id = ?", [status, updatedAt, id]);
+}
+
+export function deleteReplyById(id: string): void {
+  run("DELETE FROM replies WHERE id = ?", [id]);
 }
 
 export function getAdminPosts(): AdminPostRow[] {

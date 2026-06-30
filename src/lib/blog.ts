@@ -19,6 +19,19 @@ export type BlogLikeResult = {
   likeCount: number;
 };
 
+export type BlogReply = {
+  id: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type BlogReplySubmission = {
+  authorName: string;
+  body: string;
+};
+
 type BlogListResponse = {
   posts: BlogListItem[];
 };
@@ -28,6 +41,14 @@ type BlogPostResponse = {
 };
 
 type BlogLikeResponse = BlogLikeResult;
+
+type BlogRepliesResponse = {
+  replies: BlogReply[];
+};
+
+type BlogReplySubmissionResponse = {
+  ok: true;
+};
 
 const visitorKeyStorageKey = "blog:visitor-key";
 const visitorKeyCookieName = "blog-visitor-key";
@@ -46,7 +67,11 @@ export class BlogApiError extends Error {
   }
 }
 
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  init: RequestInit = {},
+  fallbackErrorMessage = "Unable to load blog content.",
+): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
 
@@ -75,7 +100,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
       "error" in body &&
       typeof (body as { error?: unknown }).error === "string"
         ? (body as { error: string }).error
-        : "Unable to load blog content.";
+        : fallbackErrorMessage;
 
     throw new BlogApiError(response.status, message);
   }
@@ -299,11 +324,36 @@ export async function fetchBlogPost(slug: string): Promise<BlogPost | null> {
   }
 }
 
+export async function fetchBlogReplies(slug: string): Promise<BlogReply[]> {
+  const response = await requestJson<BlogRepliesResponse>(
+    `/api/posts/${encodeURIComponent(slug)}/replies`,
+    {},
+    "Unable to load replies.",
+  );
+
+  return response.replies;
+}
+
+export async function submitBlogReply(slug: string, reply: BlogReplySubmission): Promise<void> {
+  await requestJson<BlogReplySubmissionResponse>(
+    `/api/posts/${encodeURIComponent(slug)}/replies`,
+    {
+      method: "POST",
+      body: JSON.stringify(reply),
+    },
+    "Unable to submit reply.",
+  );
+}
+
 async function requestBlogLike(path: string, visitorKey: string): Promise<BlogLikeResult> {
-  const response = await requestJson<BlogLikeResponse>(path, {
-    method: "POST",
-    body: JSON.stringify({ visitorKey }),
-  });
+  const response = await requestJson<BlogLikeResponse>(
+    path,
+    {
+      method: "POST",
+      body: JSON.stringify({ visitorKey }),
+    },
+    "Unable to like blog post.",
+  );
 
   return response;
 }

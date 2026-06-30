@@ -335,6 +335,151 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.replySection {
+  display: grid;
+  gap: 1rem;
+}
+
+.replySectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.replySectionTitle {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.replyForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.label {
+  color: #3d6568;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid rgba(118, 171, 174, 0.3);
+  border-radius: 10px;
+  padding: 0.8rem 0.95rem;
+  background-color: #fff;
+  color: #222831;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #76abae;
+  box-shadow: 0 0 0 3px rgba(118, 171, 174, 0.16);
+}
+
+.textarea {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.helper,
+.notice {
+  line-height: 1.75;
+}
+
+.helper {
+  margin: 0;
+  color: #444;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: fit-content;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 0.7rem 1rem;
+  background-color: #76abae;
+  color: #eeeeee;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.notice {
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 10px;
+  background-color: rgba(118, 171, 174, 0.08);
+  color: #35585a;
+}
+
+.noticeSuccess {
+  border-color: rgba(118, 171, 174, 0.24);
+  background-color: rgba(118, 171, 174, 0.12);
+  color: #35585a;
+}
+
+.noticeError {
+  border-color: rgba(139, 76, 76, 0.24);
+  background-color: rgba(139, 76, 76, 0.08);
+  color: #8b4c4c;
+}
+
+.replyList {
+  display: grid;
+  gap: 1rem;
+}
+
+.replyCard {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.replyBody {
+  margin: 0;
+  color: #333;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .markdown {
   display: grid;
   gap: 1rem;
@@ -489,10 +634,15 @@
     font-size: 2.25rem;
   }
 
+  .replySectionTitle {
+    font-size: 1.75rem;
+  }
+
   .postCard,
   .articleContent,
   .statusCard,
-  .emptyState {
+  .emptyState,
+  .replyCard {
     padding: 1rem;
   }
 
