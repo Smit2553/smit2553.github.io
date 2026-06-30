@@ -45,6 +45,13 @@ export interface SessionSeed {
   revokedAt: string | null;
 }
 
+export interface BlogLikeSeed {
+  id: string;
+  postId: string;
+  visitorKey: string;
+  createdAt: string;
+}
+
 type SqlValue = string | number | bigint | null;
 
 let database: DatabaseSync | null = null;
@@ -57,6 +64,7 @@ export interface PublishedBlogPostSummaryRow {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  like_count: number;
 }
 
 export interface PublishedBlogPostDetailRow extends PublishedBlogPostSummaryRow {
@@ -299,7 +307,8 @@ export function getPublishedBlogPosts(limit?: number): PublishedBlogPostSummaryR
       summary,
       published_at,
       created_at,
-      updated_at
+      updated_at,
+      (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS like_count
     FROM posts
     WHERE status = 'published'
     ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC`;
@@ -321,12 +330,53 @@ export function getPublishedBlogPostBySlug(slug: string): PublishedBlogPostDetai
       content,
       published_at,
       created_at,
-      updated_at
+      updated_at,
+      (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS like_count
     FROM posts
     WHERE slug = ? AND status = 'published'
     LIMIT 1`,
     [slug],
   );
+}
+
+export function getPublishedBlogPostById(id: string): PublishedBlogPostDetailRow | undefined {
+  return queryOne<PublishedBlogPostDetailRow>(
+    `SELECT
+      id,
+      slug,
+      title,
+      summary,
+      content,
+      published_at,
+      created_at,
+      updated_at,
+      (SELECT COUNT(*) FROM likes WHERE likes.post_id = posts.id) AS like_count
+    FROM posts
+    WHERE id = ? AND status = 'published'
+    LIMIT 1`,
+    [id],
+  );
+}
+
+export function getPublishedBlogPostLikeCountByPostId(postId: string): number {
+  const row = queryOne<{ like_count: number }>("SELECT COUNT(*) AS like_count FROM likes WHERE post_id = ?", [postId]);
+
+  return row?.like_count ?? 0;
+}
+
+export function createBlogLike(seed: BlogLikeSeed): boolean {
+  const result = getDatabase()
+    .prepare(
+      `INSERT OR IGNORE INTO likes (
+        id,
+        post_id,
+        visitor_key,
+        created_at
+      ) VALUES (?, ?, ?, ?)`,
+    )
+    .run(seed.id, seed.postId, seed.visitorKey, seed.createdAt);
+
+  return result.changes > 0;
 }
 
 export function getAdminPosts(): AdminPostRow[] {

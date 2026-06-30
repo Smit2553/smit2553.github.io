@@ -149,13 +149,28 @@
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   color: #222831;
-  text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.postCard:hover {
+.postCard:hover,
+.postCard:focus-within {
   transform: translateY(-4px);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.postCardBodyLink {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.postCardBodyLink:focus-visible {
+  outline: 2px solid rgba(118, 171, 174, 0.5);
+  outline-offset: 4px;
+  border-radius: 10px;
 }
 
 .postCardMeta,
@@ -194,6 +209,84 @@
   margin-top: auto;
   color: #76abae;
   font-weight: 700;
+  flex-wrap: wrap;
+}
+
+.postCardReadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.postCardReadLink:hover {
+  opacity: 0.85;
+}
+
+.likeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(118, 171, 174, 0.24);
+  border-radius: 999px;
+  background: rgba(118, 171, 174, 0.08);
+  color: #3d6568;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.likeButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(118, 171, 174, 0.35);
+  background: rgba(118, 171, 174, 0.14);
+}
+
+.likeButton:focus-visible {
+  outline: 2px solid rgba(118, 171, 174, 0.55);
+  outline-offset: 2px;
+}
+
+.likeButton:disabled {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.likeButtonCompact {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.likeButtonCompact .likeButtonCount {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.78rem;
+}
+
+.likeButtonLiked {
+  border-color: rgba(118, 171, 174, 0.35);
+  background: rgba(118, 171, 174, 0.14);
+}
+
+.likeButtonLiked .likeButtonCount {
+  background: rgba(118, 171, 174, 0.18);
+  color: #35585b;
+}
+
+.likeButtonCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(34, 40, 49, 0.08);
+  color: #222831;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .postCardArrow {

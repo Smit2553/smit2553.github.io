@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import BlogLikeButton from "../components/blog/BlogLikeButton";
 import MarkdownContent from "../components/blog/MarkdownContent";
 import styles from "../components/blog/blog.module.css";
 import {
@@ -143,6 +144,11 @@ export default function BlogPostPage() {
           </div>
           {post.summary && <p className={styles.articleSummary}>{post.summary}</p>}
           <div className={styles.pageActions}>
+            <BlogLikeButton
+              initialLikeCount={post.likeCount}
+              postId={post.id}
+              title={post.title}
+            />
             <Link className={styles.buttonLink} to="/blog">
               Back to writing
             </Link>

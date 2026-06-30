@@ -1,51 +1,107 @@
 import { Router, type Request, type Response } from "express";
-import { listPublishedBlogPosts, readPublishedBlogPostBySlug } from "../blog";
+import {
+  BlogError,
+  likePublishedBlogPostById,
+  likePublishedBlogPostBySlug,
+  listPublishedBlogPosts,
+  readPublishedBlogPostBySlug,
+} from "../blog";
 
 const blogRouter = Router();
 
-blogRouter.get("/", (request: Request, response: Response) => {
-  const { limit } = request.query;
+function readSlugParam(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] ?? "" : value;
+}
 
-  if (Array.isArray(limit)) {
-    response.status(400).json({ error: "limit must be a positive integer." });
+function readPostIdParam(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] ?? "" : value;
+}
+
+function respondWithBlogError(response: Response, error: unknown, fallbackMessage: string): void {
+  if (error instanceof BlogError) {
+    response.status(error.status).json({ error: error.message });
     return;
   }
 
-  let parsedLimit: number | undefined;
+  response.status(500).json({ error: fallbackMessage });
+}
 
-  if (typeof limit === "string" && limit.length > 0) {
-    const numericLimit = Number(limit);
+blogRouter.get("/", (request: Request, response: Response) => {
+  try {
+    const { limit } = request.query;
 
-    if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
+    if (Array.isArray(limit)) {
       response.status(400).json({ error: "limit must be a positive integer." });
       return;
     }
 
-    parsedLimit = numericLimit;
+    let parsedLimit: number | undefined;
+
+    if (typeof limit === "string" && limit.length > 0) {
+      const numericLimit = Number(limit);
+
+      if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
+        response.status(400).json({ error: "limit must be a positive integer." });
+        return;
+      }
+
+      parsedLimit = numericLimit;
+    }
+
+    const posts = listPublishedBlogPosts(parsedLimit);
+
+    response.json({ posts });
+  } catch (error) {
+    respondWithBlogError(response, error, "Unable to load blog content.");
   }
-
-  const posts = listPublishedBlogPosts(parsedLimit);
-
-  response.json({ posts });
 });
 
 blogRouter.get("/:slug", (request: Request, response: Response) => {
-  const slugValue = request.params.slug;
-  const slug = Array.isArray(slugValue) ? (slugValue[0] ?? "").trim() : slugValue.trim();
+  try {
+    const slug = readSlugParam(request.params.slug).trim();
 
-  if (slug.length === 0) {
-    response.status(400).json({ error: "Slug is required." });
-    return;
+    if (slug.length === 0) {
+      response.status(400).json({ error: "Slug is required." });
+      return;
+    }
+
+    const post = readPublishedBlogPostBySlug(slug);
+
+    if (!post) {
+      response.status(404).json({ error: "Post not found." });
+      return;
+    }
+
+    response.json({ post });
+  } catch (error) {
+    respondWithBlogError(response, error, "Unable to load blog content.");
   }
-
-  const post = readPublishedBlogPostBySlug(slug);
-
-  if (!post) {
-    response.status(404).json({ error: "Post not found." });
-    return;
-  }
-
-  response.json({ post });
 });
+
+function handleLikeRequest(request: Request, response: Response): void {
+  try {
+    const slug = readSlugParam(request.params.slug);
+    const result = likePublishedBlogPostBySlug(slug, request.body);
+
+    response.json(result);
+  } catch (error) {
+    respondWithBlogError(response, error, "Unable to like blog post.");
+  }
+}
+
+function handleLikeRequestById(request: Request, response: Response): void {
+  try {
+    const id = readPostIdParam(request.params.id);
+    const result = likePublishedBlogPostById(id, request.body);
+
+    response.json(result);
+  } catch (error) {
+    respondWithBlogError(response, error, "Unable to like blog post.");
+  }
+}
+
+blogRouter.post("/:slug/likes", handleLikeRequest);
+blogRouter.post("/:slug/like", handleLikeRequest);
+blogRouter.post("/id/:id/likes", handleLikeRequestById);
 
 export default blogRouter;
