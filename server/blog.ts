@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import {
   createBlogLike,
+  deleteBlogLike,
   getPublishedBlogPostById,
   getPublishedBlogPostBySlug,
   getPublishedBlogPostLikeCountByPostId,
@@ -112,35 +113,37 @@ function toPublicBlogPostDetail(row: PublishedBlogPostDetailRow): PublicBlogPost
   };
 }
 
-function createLikeResult(post: PublishedBlogPostSummaryRow, payload: BlogLikePayload): PublicBlogLikeResult {
+async function createLikeResult(post: PublishedBlogPostSummaryRow, payload: BlogLikePayload): Promise<PublicBlogLikeResult> {
   const visitorKey = readVisitorKey(payload.visitorKey ?? payload.visitor_key);
 
-  const liked = createBlogLike({
+  const created = await createBlogLike({
     id: crypto.randomUUID(),
     postId: post.id,
     visitorKey,
     createdAt: nowIso(),
   });
 
+  const liked = created ? true : !(await deleteBlogLike(post.id, visitorKey));
+
   return {
     ok: true,
     liked,
-    likeCount: getPublishedBlogPostLikeCountByPostId(post.id),
+    likeCount: await getPublishedBlogPostLikeCountByPostId(post.id),
   };
 }
 
-export function listPublishedBlogPosts(limit?: number): PublicBlogPostSummary[] {
-  return getPublishedBlogPosts(limit).map(toPublicBlogPostSummary);
+export async function listPublishedBlogPosts(limit?: number): Promise<PublicBlogPostSummary[]> {
+  return (await getPublishedBlogPosts(limit)).map(toPublicBlogPostSummary);
 }
 
-export function readPublishedBlogPostBySlug(slug: string): PublicBlogPostDetail | null {
+export async function readPublishedBlogPostBySlug(slug: string): Promise<PublicBlogPostDetail | null> {
   const normalizedSlug = normalizeSlug(slug);
 
   if (!normalizedSlug) {
     return null;
   }
 
-  const post = getPublishedBlogPostBySlug(normalizedSlug);
+  const post = await getPublishedBlogPostBySlug(normalizedSlug);
 
   if (!post) {
     return null;
@@ -149,7 +152,7 @@ export function readPublishedBlogPostBySlug(slug: string): PublicBlogPostDetail 
   return toPublicBlogPostDetail(post);
 }
 
-export function likePublishedBlogPostBySlug(slug: string, body: unknown): PublicBlogLikeResult {
+export async function likePublishedBlogPostBySlug(slug: string, body: unknown): Promise<PublicBlogLikeResult> {
   const normalizedSlug = normalizeSlug(slug);
 
   if (!normalizedSlug) {
@@ -157,7 +160,7 @@ export function likePublishedBlogPostBySlug(slug: string, body: unknown): Public
   }
 
   const payload = readLikePayload(body);
-  const post = getPublishedBlogPostBySlug(normalizedSlug);
+  const post = await getPublishedBlogPostBySlug(normalizedSlug);
 
   if (!post) {
     throw new BlogError(404, "Post not found.");
@@ -166,7 +169,7 @@ export function likePublishedBlogPostBySlug(slug: string, body: unknown): Public
   return createLikeResult(post, payload);
 }
 
-export function likePublishedBlogPostById(id: string, body: unknown): PublicBlogLikeResult {
+export async function likePublishedBlogPostById(id: string, body: unknown): Promise<PublicBlogLikeResult> {
   const normalizedId = normalizePostId(id);
 
   if (!normalizedId) {
@@ -174,7 +177,7 @@ export function likePublishedBlogPostById(id: string, body: unknown): PublicBlog
   }
 
   const payload = readLikePayload(body);
-  const post = getPublishedBlogPostById(normalizedId);
+  const post = await getPublishedBlogPostById(normalizedId);
 
   if (!post) {
     throw new BlogError(404, "Post not found.");

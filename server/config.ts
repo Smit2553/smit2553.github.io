@@ -1,5 +1,13 @@
 import path from "node:path";
 
+try {
+  process.loadEnvFile();
+} catch (error) {
+  if (typeof error !== "object" || error === null || !("code" in error) || error.code !== "ENOENT") {
+    throw error;
+  }
+}
+
 const parsedPort = Number(process.env.PORT ?? process.env.API_PORT);
 const isProduction = process.env.NODE_ENV === "production";
 const allowDevAdminDefaults = parseBooleanEnv("BLOG_ALLOW_DEV_ADMIN_DEFAULTS");
@@ -62,6 +70,8 @@ function parseNumberEnv(name: string, fallback: number): number {
 export const PORT = Number.isFinite(parsedPort) ? parsedPort : 3001;
 export const clientDistPath = path.resolve(process.cwd(), "dist");
 export const clientIndexPath = path.join(clientDistPath, "index.html");
+export const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
+export const blogDbSchema = process.env.BLOG_DB_SCHEMA?.trim() || (isProduction ? "blog_prod" : "blog_dev");
 const sqlitePathEnv = process.env.BLOG_SQLITE_PATH || process.env.DATABASE_PATH;
 export const sqlitePath = path.resolve(
   process.cwd(),

@@ -20,17 +20,17 @@ function respondWithAdminPostError(response: Response, error: unknown): void {
   response.status(500).json({ error: "Unable to process post." });
 }
 
-adminPostsRouter.get("/", (_request: Request, response: Response) => {
+adminPostsRouter.get("/", async (_request: Request, response: Response) => {
   try {
-    response.json({ posts: listAdminPosts() });
+    response.json({ posts: await listAdminPosts() });
   } catch (error) {
     respondWithAdminPostError(response, error);
   }
 });
 
-adminPostsRouter.get("/:id", (request: Request, response: Response) => {
+adminPostsRouter.get("/:id", async (request: Request, response: Response) => {
   try {
-    const post = readAdminPostById(readRouteParam(request.params.id));
+    const post = await readAdminPostById(readRouteParam(request.params.id));
 
     if (!post) {
       response.status(404).json({ error: "Post not found." });
@@ -43,27 +43,27 @@ adminPostsRouter.get("/:id", (request: Request, response: Response) => {
   }
 });
 
-adminPostsRouter.post("/", (request: Request, response: Response) => {
+adminPostsRouter.post("/", async (request: Request, response: Response) => {
   try {
-    createAdminPost(request.body);
+    await createAdminPost(request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminPostError(response, error);
   }
 });
 
-adminPostsRouter.patch("/:id", (request: Request, response: Response) => {
+adminPostsRouter.patch("/:id", async (request: Request, response: Response) => {
   try {
-    updateAdminPost(readRouteParam(request.params.id), request.body);
+    await updateAdminPost(readRouteParam(request.params.id), request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminPostError(response, error);
   }
 });
 
-adminPostsRouter.delete("/:id", (request: Request, response: Response) => {
+adminPostsRouter.delete("/:id", async (request: Request, response: Response) => {
   try {
-    deleteAdminPost(readRouteParam(request.params.id));
+    await deleteAdminPost(readRouteParam(request.params.id));
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminPostError(response, error);

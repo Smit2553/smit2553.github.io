@@ -33,7 +33,7 @@ function respondWithReplyError(response: Response, error: unknown, fallbackMessa
   response.status(500).json({ error: fallbackMessage });
 }
 
-blogRouter.get("/", (request: Request, response: Response) => {
+blogRouter.get("/", async (request: Request, response: Response) => {
   try {
     const parsedLimit = readPositiveIntegerQueryParam(request.query.limit);
 
@@ -42,7 +42,7 @@ blogRouter.get("/", (request: Request, response: Response) => {
       return;
     }
 
-    const posts = listPublishedBlogPosts(parsedLimit);
+    const posts = await listPublishedBlogPosts(parsedLimit);
 
     response.json({ posts });
   } catch (error) {
@@ -50,7 +50,7 @@ blogRouter.get("/", (request: Request, response: Response) => {
   }
 });
 
-blogRouter.get("/:slug", (request: Request, response: Response) => {
+blogRouter.get("/:slug", async (request: Request, response: Response) => {
   try {
     const slug = readRouteParam(request.params.slug);
 
@@ -59,7 +59,7 @@ blogRouter.get("/:slug", (request: Request, response: Response) => {
       return;
     }
 
-    const post = readPublishedBlogPostBySlug(slug);
+    const post = await readPublishedBlogPostBySlug(slug);
 
     if (!post) {
       response.status(404).json({ error: "Post not found." });
@@ -72,10 +72,10 @@ blogRouter.get("/:slug", (request: Request, response: Response) => {
   }
 });
 
-blogRouter.get("/:slug/replies", (request: Request, response: Response) => {
+blogRouter.get("/:slug/replies", async (request: Request, response: Response) => {
   try {
     const slug = readRouteParam(request.params.slug);
-    const replies = listPublishedBlogRepliesBySlug(slug);
+    const replies = await listPublishedBlogRepliesBySlug(slug);
 
     response.json({ replies });
   } catch (error) {
@@ -83,21 +83,21 @@ blogRouter.get("/:slug/replies", (request: Request, response: Response) => {
   }
 });
 
-blogRouter.post("/:slug/replies", (request: Request, response: Response) => {
+blogRouter.post("/:slug/replies", async (request: Request, response: Response) => {
   try {
     const slug = readRouteParam(request.params.slug);
 
-    createPublishedBlogReplyBySlug(slug, request.body);
+    await createPublishedBlogReplyBySlug(slug, request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithReplyError(response, error, "Unable to submit reply.");
   }
 });
 
-function handleLikeRequest(request: Request, response: Response): void {
+async function handleLikeRequest(request: Request, response: Response): Promise<void> {
   try {
     const slug = readRouteParam(request.params.slug);
-    const result = likePublishedBlogPostBySlug(slug, request.body);
+    const result = await likePublishedBlogPostBySlug(slug, request.body);
 
     response.json(result);
   } catch (error) {
@@ -105,10 +105,10 @@ function handleLikeRequest(request: Request, response: Response): void {
   }
 }
 
-function handleLikeRequestById(request: Request, response: Response): void {
+async function handleLikeRequestById(request: Request, response: Response): Promise<void> {
   try {
     const id = readRouteParam(request.params.id);
-    const result = likePublishedBlogPostById(id, request.body);
+    const result = await likePublishedBlogPostById(id, request.body);
 
     response.json(result);
   } catch (error) {

@@ -301,6 +301,16 @@ export function markBlogPostLiked(postId: string): void {
   writeLikedBlogPostIds([...likedPostIds, normalizedPostId]);
 }
 
+export function unmarkBlogPostLiked(postId: string): void {
+  const normalizedPostId = normalizePostId(postId);
+
+  if (normalizedPostId.length === 0) {
+    return;
+  }
+
+  writeLikedBlogPostIds(readLikedBlogPostIds().filter((likedPostId) => likedPostId !== normalizedPostId));
+}
+
 export async function fetchBlogPosts(limit?: number): Promise<BlogListItem[]> {
   const query = typeof limit === "number" ? `?limit=${limit}` : "";
   const response = await requestJson<BlogListResponse>(`/api/posts${query}`);

@@ -21,7 +21,7 @@ function isLoginPayload(body: unknown): body is { username?: unknown; password?:
   return true;
 }
 
-adminRouter.post("/login", (request: Request, response: Response) => {
+adminRouter.post("/login", async (request: Request, response: Response) => {
   if (!isLoginPayload(request.body)) {
     response.status(400).json({ error: "Username and password are required." });
     return;
@@ -36,7 +36,7 @@ adminRouter.post("/login", (request: Request, response: Response) => {
 
   const username = body.username.trim();
 
-  const login = loginAdmin(username, body.password);
+  const login = await loginAdmin(username, body.password);
 
   if (!login) {
     response.status(401).json({ error: "Invalid credentials." });
@@ -47,8 +47,8 @@ adminRouter.post("/login", (request: Request, response: Response) => {
   response.json({ ok: true, admin: login.user, session: login.session });
 });
 
-adminRouter.post("/logout", (request: Request, response: Response) => {
-  logoutAdminSession(request, response);
+adminRouter.post("/logout", async (request: Request, response: Response) => {
+  await logoutAdminSession(request, response);
   response.json({ ok: true });
 });
 

@@ -16,9 +16,10 @@ Live site: https://smit-dev.codestacx.com
 ## Local Dev
 
 - `npm install`
-- `BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 npm run dev`
+- `npm run dev`
 - Fallback admin creds: `admin` / `admin-dev-only`
-- Without the fallback flag, set `BLOG_ADMIN_USERNAME` and `BLOG_ADMIN_PASSWORD`
+- `npm run dev` includes the local fallback flag automatically
+- Without the fallback path, set `BLOG_ADMIN_USERNAME` and `BLOG_ADMIN_PASSWORD`
 - `npm run dev:client` or `npm run dev:server` if you only need one side
 - Open `http://localhost:5173`; `/api/*` proxies to `127.0.0.1:3001`
 
@@ -27,4 +28,6 @@ Live site: https://smit-dev.codestacx.com
 - Build: `npm run build`
 - Run built app: `npm start`
 - Coolify/Nixpacks should use `npm start`
-- SQLite defaults to `data/blog.sqlite`; override with `BLOG_SQLITE_PATH` or `DATABASE_PATH`
+- Postgres foundation: set `DATABASE_URL` and `BLOG_DB_SCHEMA` (`blog_dev` or `blog_prod`)
+- `npm run db:smoke` checks connection and schema access
+- Bootstrap SQL lives in `db/blog_dev.sql` and `db/blog_prod.sql`

@@ -197,9 +197,9 @@ function toAdminReply(row: ReplyWithPostRow): AdminReply {
   };
 }
 
-function getPublishedReplyPost(slug: string) {
+async function getPublishedReplyPost(slug: string) {
   const normalizedSlug = normalizeSlug(slug);
-  const post = getPublishedBlogPostBySlug(normalizedSlug);
+  const post = await getPublishedBlogPostBySlug(normalizedSlug);
 
   if (!post) {
     throw new ReplyError(404, "Post not found.");
@@ -208,17 +208,17 @@ function getPublishedReplyPost(slug: string) {
   return post;
 }
 
-export function listPublishedBlogRepliesBySlug(slug: string): PublicReply[] {
-  const post = getPublishedReplyPost(slug);
+export async function listPublishedBlogRepliesBySlug(slug: string): Promise<PublicReply[]> {
+  const post = await getPublishedReplyPost(slug);
 
   // Public replies are flat only; hide any legacy threaded rows from the public API.
-  return getRepliesByPostIdAndStatus(post.id, "approved")
+  return (await getRepliesByPostIdAndStatus(post.id, "approved"))
     .filter((reply) => reply.parent_reply_id === null)
     .map(toPublicReply);
 }
 
-export function createPublishedBlogReplyBySlug(slug: string, body: unknown): PublicReply {
-  const post = getPublishedReplyPost(slug);
+export async function createPublishedBlogReplyBySlug(slug: string, body: unknown): Promise<PublicReply> {
+  const post = await getPublishedReplyPost(slug);
   const payload = requireObjectBody(body);
   const authorName = readRequiredTextField(payload.authorName ?? payload.author_name, "Author name");
   const replyBody = readRequiredPlainTextField(payload.body, "Reply body");
@@ -243,7 +243,7 @@ export function createPublishedBlogReplyBySlug(slug: string, body: unknown): Pub
     updatedAt: now,
   };
 
-  insertReplyRow(seed);
+  await insertReplyRow(seed);
 
   return toPublicReply({
     id: seed.id,
@@ -258,13 +258,13 @@ export function createPublishedBlogReplyBySlug(slug: string, body: unknown): Pub
   });
 }
 
-export function listAdminReplies(): AdminReply[] {
-  return getAdminReplyRows().map(toAdminReply);
+export async function listAdminReplies(): Promise<AdminReply[]> {
+  return (await getAdminReplyRows()).map(toAdminReply);
 }
 
-export function updateAdminReplyStatus(id: string, body: unknown): void {
+export async function updateAdminReplyStatus(id: string, body: unknown): Promise<void> {
   const replyId = normalizeReplyId(id);
-  const existing = getReplyById(replyId);
+  const existing = await getReplyById(replyId);
 
   if (!existing) {
     throw new ReplyError(404, "Reply not found.");
@@ -273,16 +273,16 @@ export function updateAdminReplyStatus(id: string, body: unknown): void {
   const payload = requireObjectBody(body) as ReplyStatusPayload;
   const status = readReplyStatus(payload.status);
 
-  updateReplyRowStatus(replyId, status, nowIso());
+  await updateReplyRowStatus(replyId, status, nowIso());
 }
 
-export function deleteAdminReply(id: string): void {
+export async function deleteAdminReply(id: string): Promise<void> {
   const replyId = normalizeReplyId(id);
-  const existing = getReplyById(replyId);
+  const existing = await getReplyById(replyId);
 
   if (!existing) {
     throw new ReplyError(404, "Reply not found.");
   }
 
-  deleteReplyRow(replyId);
+  await deleteReplyRow(replyId);
 }

@@ -151,16 +151,16 @@ function toPublicAdminSession(session: Pick<SessionRow, "id" | "created_at" | "l
   };
 }
 
-export function initializeAdminAuth(): AdminUserRow {
+export async function initializeAdminAuth(): Promise<AdminUserRow> {
   const now = nowIso();
-  deleteExpiredSessions(now);
+  await deleteExpiredSessions(now);
 
-  const existing = getAdminUserById(PRIMARY_ADMIN_USER_ID);
+  const existing = await getAdminUserById(PRIMARY_ADMIN_USER_ID);
 
   if (!existing) {
     const { saltHex, hashHex } = createPasswordRecord(adminPassword);
 
-    upsertAdminUser({
+    await upsertAdminUser({
       id: PRIMARY_ADMIN_USER_ID,
       username: adminUsername,
       passwordHash: hashHex,
@@ -171,7 +171,7 @@ export function initializeAdminAuth(): AdminUserRow {
       disabledAt: null,
     });
 
-    return getAdminUserById(PRIMARY_ADMIN_USER_ID) as AdminUserRow;
+    return (await getAdminUserById(PRIMARY_ADMIN_USER_ID)) as AdminUserRow;
   }
 
   const passwordMatches = existing.disabled_at === null && existing.username === adminUsername
@@ -183,7 +183,7 @@ export function initializeAdminAuth(): AdminUserRow {
 
   const { saltHex, hashHex } = createPasswordRecord(adminPassword);
 
-  upsertAdminUser({
+  await upsertAdminUser({
     id: PRIMARY_ADMIN_USER_ID,
     username: adminUsername,
     passwordHash: hashHex,
@@ -193,12 +193,12 @@ export function initializeAdminAuth(): AdminUserRow {
     lastLoginAt: existing.last_login_at,
     disabledAt: null,
   });
-  revokeSessionsByAdminUserId(PRIMARY_ADMIN_USER_ID, now);
+  await revokeSessionsByAdminUserId(PRIMARY_ADMIN_USER_ID, now);
 
-  return getAdminUserById(PRIMARY_ADMIN_USER_ID) as AdminUserRow;
+  return (await getAdminUserById(PRIMARY_ADMIN_USER_ID)) as AdminUserRow;
 }
 
-export function loginAdmin(username: string, password: string): AdminLoginResult | null {
+export async function loginAdmin(username: string, password: string): Promise<AdminLoginResult | null> {
   const normalizedUsername = username.trim();
 
   if (normalizedUsername.length === 0) {
@@ -206,9 +206,9 @@ export function loginAdmin(username: string, password: string): AdminLoginResult
   }
 
   const now = nowIso();
-  deleteExpiredSessions(now);
+  await deleteExpiredSessions(now);
 
-  const user = getAdminUserByUsername(normalizedUsername);
+  const user = await getAdminUserByUsername(normalizedUsername);
 
   if (!user || user.disabled_at !== null) {
     return null;
@@ -230,8 +230,8 @@ export function loginAdmin(username: string, password: string): AdminLoginResult
     revokedAt: null,
   };
 
-  createSession(session);
-  updateAdminUserLoginTime(user.id, now);
+  await createSession(session);
+  await updateAdminUserLoginTime(user.id, now);
 
   return {
     user: toPublicAdminUser({ ...user, last_login_at: now }),
@@ -245,7 +245,7 @@ export function loginAdmin(username: string, password: string): AdminLoginResult
   };
 }
 
-export function resolveAdminAuth(request: Request): AdminAuthContext | null {
+export async function resolveAdminAuth(request: Request): Promise<AdminAuthContext | null> {
   const token = getCookieValue(request, adminSessionCookieName);
 
   if (!token) {
@@ -253,7 +253,7 @@ export function resolveAdminAuth(request: Request): AdminAuthContext | null {
   }
 
   const now = nowIso();
-  const session = getSessionByTokenHash(hashSessionToken(token));
+  const session = await getSessionByTokenHash(hashSessionToken(token));
 
   if (!session) {
     return null;
@@ -264,18 +264,18 @@ export function resolveAdminAuth(request: Request): AdminAuthContext | null {
   }
 
   if (session.expires_at <= now) {
-    revokeSessionById(session.id, now);
+    await revokeSessionById(session.id, now);
     return null;
   }
 
-  const user = getAdminUserById(session.admin_user_id);
+  const user = await getAdminUserById(session.admin_user_id);
 
   if (!user || user.disabled_at !== null) {
-    revokeSessionById(session.id, now);
+    await revokeSessionById(session.id, now);
     return null;
   }
 
-  touchSession(session.id, now);
+  await touchSession(session.id, now);
 
   return {
     user,
@@ -286,27 +286,31 @@ export function resolveAdminAuth(request: Request): AdminAuthContext | null {
   };
 }
 
-export function requireAdminAuth(request: Request, response: Response, next: NextFunction): void {
-  const auth = resolveAdminAuth(request);
+export async function requireAdminAuth(request: Request, response: Response, next: NextFunction): Promise<void> {
+  try {
+    const auth = await resolveAdminAuth(request);
 
-  if (!auth) {
-    clearAdminSessionCookie(response);
-    response.status(401).json({ error: "Unauthorized" });
-    return;
+    if (!auth) {
+      clearAdminSessionCookie(response);
+      response.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    (response.locals as { adminAuth?: AdminAuthContext }).adminAuth = auth;
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  (response.locals as { adminAuth?: AdminAuthContext }).adminAuth = auth;
-  next();
 }
 
-export function logoutAdminSession(request: Request, response: Response): void {
+export async function logoutAdminSession(request: Request, response: Response): Promise<void> {
   const token = getCookieValue(request, adminSessionCookieName);
 
   if (token) {
-    const session = getSessionByTokenHash(hashSessionToken(token));
+    const session = await getSessionByTokenHash(hashSessionToken(token));
 
     if (session) {
-      revokeSessionById(session.id, nowIso());
+      await revokeSessionById(session.id, nowIso());
     }
   }
 

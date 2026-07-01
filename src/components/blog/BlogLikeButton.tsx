@@ -3,6 +3,7 @@ import {
   hasLikedBlogPost,
   likeBlogPostById,
   markBlogPostLiked,
+  unmarkBlogPostLiked,
 } from "../../lib/blog";
 import styles from "./blog.module.css";
 
@@ -33,10 +34,10 @@ export default function BlogLikeButton({
     setIsSaving(false);
   }, [initialLikeCount, postId]);
 
-  const label = isSaving ? "Liking..." : hasLiked ? "Liked" : "Like";
+  const label = isSaving ? (hasLiked ? "Updating..." : "Liking...") : hasLiked ? "Liked" : "Like";
 
   async function handleLike(): Promise<void> {
-    if (hasLiked || isSaving) {
+    if (isSaving) {
       return;
     }
 
@@ -45,9 +46,14 @@ export default function BlogLikeButton({
     try {
       const result = await likeBlogPostById(postId);
 
-      markBlogPostLiked(postId);
+      if (result.liked) {
+        markBlogPostLiked(postId);
+      } else {
+        unmarkBlogPostLiked(postId);
+      }
+
       setLikeCount(result.likeCount);
-      setHasLiked(true);
+      setHasLiked(result.liked);
     } catch (error) {
       console.error(error);
     } finally {
@@ -66,7 +72,7 @@ export default function BlogLikeButton({
       ]
         .filter(Boolean)
         .join(" ")}
-      disabled={hasLiked || isSaving}
+      disabled={isSaving}
       type="button"
       onClick={() => {
         void handleLike();

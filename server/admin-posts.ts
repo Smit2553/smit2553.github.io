@@ -4,6 +4,7 @@ import {
   getAdminPostById as getAdminPostRowById,
   getAdminPostBySlug as getAdminPostRowBySlug,
   getAdminPosts as getAdminPostRows,
+  isUniqueConstraintError,
   insertAdminPost as insertAdminPostRow,
   updateAdminPost as updateAdminPostRow,
   type AdminPostRow,
@@ -123,17 +124,7 @@ function readEditableStatus(value: unknown): EditableStatus {
 }
 
 function isSlugConstraintError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  const code = (error as { code?: unknown }).code;
-  const message = (error as { message?: unknown }).message;
-
-  return (
-    (typeof code === "string" && code === "SQLITE_CONSTRAINT_UNIQUE")
-    || (typeof message === "string" && message.includes("UNIQUE constraint failed: posts.slug"))
-  );
+  return isUniqueConstraintError(error, "posts_slug_key");
 }
 
 function toAdminPostSummary(row: AdminPostRow): AdminPostSummary {
@@ -170,21 +161,21 @@ function toAdminPostDetailFromValues(values: AdminPostSeed): AdminPostDetail {
   };
 }
 
-function assertSlugIsAvailable(slug: string, currentPostId?: string): void {
-  const existing = getAdminPostRowBySlug(slug);
+async function assertSlugIsAvailable(slug: string, currentPostId?: string): Promise<void> {
+  const existing = await getAdminPostRowBySlug(slug);
 
   if (existing && existing.id !== currentPostId) {
     throw new AdminPostError(409, "Slug already exists.");
   }
 }
 
-export function listAdminPosts(): AdminPostSummary[] {
-  return getAdminPostRows().map(toAdminPostSummary);
+export async function listAdminPosts(): Promise<AdminPostSummary[]> {
+  return (await getAdminPostRows()).map(toAdminPostSummary);
 }
 
-export function readAdminPostById(id: string): AdminPostDetail | null {
+export async function readAdminPostById(id: string): Promise<AdminPostDetail | null> {
   const postId = normalizePostId(id);
-  const row = getAdminPostRowById(postId);
+  const row = await getAdminPostRowById(postId);
 
   if (!row) {
     return null;
@@ -193,7 +184,7 @@ export function readAdminPostById(id: string): AdminPostDetail | null {
   return toAdminPostDetail(row);
 }
 
-export function createAdminPost(body: unknown): AdminPostDetail {
+export async function createAdminPost(body: unknown): Promise<AdminPostDetail> {
   const payload = requireObjectBody(body);
   const title = readRequiredTextField(payload.title, "Title");
   const slug = readRequiredTextField(payload.slug, "Slug");
@@ -206,7 +197,7 @@ export function createAdminPost(body: unknown): AdminPostDetail {
     : "draft";
   const now = nowIso();
 
-  assertSlugIsAvailable(slug);
+  await assertSlugIsAvailable(slug);
 
   const post: AdminPostSeed = {
     id: crypto.randomUUID(),
@@ -221,7 +212,7 @@ export function createAdminPost(body: unknown): AdminPostDetail {
   };
 
   try {
-    insertAdminPostRow(post);
+    await insertAdminPostRow(post);
   } catch (error) {
     if (isSlugConstraintError(error)) {
       throw new AdminPostError(409, "Slug already exists.");
@@ -233,9 +224,9 @@ export function createAdminPost(body: unknown): AdminPostDetail {
   return toAdminPostDetailFromValues(post);
 }
 
-export function updateAdminPost(id: string, body: unknown): AdminPostDetail {
+export async function updateAdminPost(id: string, body: unknown): Promise<AdminPostDetail> {
   const postId = normalizePostId(id);
-  const existing = getAdminPostRowById(postId);
+  const existing = await getAdminPostRowById(postId);
 
   if (!existing) {
     throw new AdminPostError(404, "Post not found.");
@@ -262,7 +253,7 @@ export function updateAdminPost(id: string, body: unknown): AdminPostDetail {
   const updatedAt = now;
 
   if (slug !== existing.slug) {
-    assertSlugIsAvailable(slug, existing.id);
+    await assertSlugIsAvailable(slug, existing.id);
   }
 
   const post: AdminPostSeed = {
@@ -278,7 +269,7 @@ export function updateAdminPost(id: string, body: unknown): AdminPostDetail {
   };
 
   try {
-    updateAdminPostRow(post);
+    await updateAdminPostRow(post);
   } catch (error) {
     if (isSlugConstraintError(error)) {
       throw new AdminPostError(409, "Slug already exists.");
@@ -290,13 +281,13 @@ export function updateAdminPost(id: string, body: unknown): AdminPostDetail {
   return toAdminPostDetailFromValues(post);
 }
 
-export function deleteAdminPost(id: string): void {
+export async function deleteAdminPost(id: string): Promise<void> {
   const postId = normalizePostId(id);
-  const existing = getAdminPostRowById(postId);
+  const existing = await getAdminPostRowById(postId);
 
   if (!existing) {
     throw new AdminPostError(404, "Post not found.");
   }
 
-  deleteAdminPostRow(postId);
+  await deleteAdminPostRow(postId);
 }

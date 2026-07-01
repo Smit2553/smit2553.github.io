@@ -13,26 +13,26 @@ function respondWithAdminReplyError(response: Response, error: unknown): void {
   response.status(500).json({ error: "Unable to process reply." });
 }
 
-adminRepliesRouter.get("/", (_request: Request, response: Response) => {
+adminRepliesRouter.get("/", async (_request: Request, response: Response) => {
   try {
-    response.json({ replies: listAdminReplies() });
+    response.json({ replies: await listAdminReplies() });
   } catch (error) {
     respondWithAdminReplyError(response, error);
   }
 });
 
-adminRepliesRouter.patch("/:id", (request: Request, response: Response) => {
+adminRepliesRouter.patch("/:id", async (request: Request, response: Response) => {
   try {
-    updateAdminReplyStatus(readRouteParam(request.params.id), request.body);
+    await updateAdminReplyStatus(readRouteParam(request.params.id), request.body);
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminReplyError(response, error);
   }
 });
 
-adminRepliesRouter.delete("/:id", (request: Request, response: Response) => {
+adminRepliesRouter.delete("/:id", async (request: Request, response: Response) => {
   try {
-    deleteAdminReply(readRouteParam(request.params.id));
+    await deleteAdminReply(readRouteParam(request.params.id));
     response.json({ ok: true });
   } catch (error) {
     respondWithAdminReplyError(response, error);
