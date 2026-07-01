@@ -5,6 +5,15 @@ export type SiteConfig = {
 
 type SiteConfigResponse = SiteConfig;
 
+function isSiteConfigResponse(value: unknown): value is SiteConfigResponse {
+  return typeof value === "object"
+    && value !== null
+    && "developmentWebsite" in value
+    && typeof (value as { developmentWebsite?: unknown }).developmentWebsite === "boolean"
+    && "productionWebsiteUrl" in value
+    && typeof (value as { productionWebsiteUrl?: unknown }).productionWebsiteUrl === "string";
+}
+
 export async function fetchSiteConfig(): Promise<SiteConfig> {
   const response = await fetch("/api/site", {
     cache: "no-store",
@@ -17,5 +26,11 @@ export async function fetchSiteConfig(): Promise<SiteConfig> {
     throw new Error("Unable to load site configuration.");
   }
 
-  return response.json() as Promise<SiteConfigResponse>;
+  const body: unknown = await response.json();
+
+  if (!isSiteConfigResponse(body)) {
+    throw new Error("Invalid site configuration response.");
+  }
+
+  return body;
 }
