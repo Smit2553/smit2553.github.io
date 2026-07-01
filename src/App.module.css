@@ -126,6 +126,34 @@
   padding: 0 1rem;
 }
 
+.environmentBanner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0.8rem 1rem;
+  background-color: #35585a;
+  color: #eeeeee;
+  box-shadow: 0 6px 18px rgba(34, 40, 49, 0.12);
+}
+
+.environmentBannerText {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.environmentBannerLink {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.environmentBannerLink:hover {
+  opacity: 0.85;
+}
+
 .routeFallback {
   display: grid;
   place-items: center;

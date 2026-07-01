@@ -2,7 +2,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import path from "node:path";
 import adminRouter from "./routes/admin";
 import blogRouter from "./routes/blog";
-import { clientDistPath, clientIndexPath } from "./config";
+import { blogDbSchema, clientDistPath, clientIndexPath } from "./config";
 
 export const app = express();
 
@@ -18,6 +18,13 @@ app.use(express.json({ limit: "32kb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
+});
+
+app.get("/api/site", (_req, res) => {
+  res.json({
+    developmentWebsite: blogDbSchema === "blog_dev",
+    productionWebsiteUrl: "https://smit.codestacx.com",
+  });
 });
 
 app.use("/api/posts", blogRouter);
