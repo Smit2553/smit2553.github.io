@@ -50,6 +50,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
   const [submissionState, setSubmissionState] = useState<SubmissionState>({ status: "idle" });
   const [authorName, setAuthorName] = useState("");
   const [body, setBody] = useState("");
+  const [replyTarget, setReplyTarget] = useState<BlogReply | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -58,6 +59,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
     setSubmissionState({ status: "idle" });
     setAuthorName("");
     setBody("");
+    setReplyTarget(null);
 
     void (async () => {
       try {
@@ -113,10 +115,12 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
       await submitBlogReply(slug, {
         authorName: normalizedAuthorName,
         body: normalizedBody,
+        parentReplyId: replyTarget?.id ?? null,
       });
 
       setAuthorName("");
       setBody("");
+      setReplyTarget(null);
       setSubmissionState({
         status: "success",
         message: "Thanks. Your reply is pending approval and will appear once it is approved.",
@@ -124,6 +128,13 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
     } catch (error) {
       setSubmissionState({ status: "error", message: getBlogErrorMessage(error) });
     }
+  }
+
+  const replies = repliesState.status === "ready" ? repliesState.replies : [];
+  const rootReplies = replies.filter((reply) => reply.parentReplyId === null);
+
+  function getChildReplies(parentReplyId: string): BlogReply[] {
+    return replies.filter((reply) => reply.parentReplyId === parentReplyId);
   }
 
   return (
@@ -134,13 +145,24 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
           Replies
         </h2>
         <p className={styles.pageLead}>
-          Approved replies to "{postTitle}" appear below. New replies are submitted as plain text and stay
-          pending approval until reviewed.
+          Approved replies to "{postTitle}" appear below. New replies and subreplies are submitted as plain text
+          and stay pending approval until reviewed.
         </p>
       </div>
 
       <div className={styles.articleContent}>
         <form className={styles.replyForm} noValidate onSubmit={handleSubmit}>
+          {replyTarget ? (
+            <div className={styles.replyTargetCard} role="status">
+              <p className={styles.replyTargetText}>
+                Replying to <strong>{replyTarget.authorName}</strong>
+              </p>
+              <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => setReplyTarget(null)} type="button">
+                Cancel reply
+              </button>
+            </div>
+          ) : null}
+
           {submissionState.status === "success" && (
             <div className={`${styles.notice} ${styles.noticeSuccess}`} role="status">
               {submissionState.message}
@@ -172,7 +194,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor={replyInputId}>
-              Reply
+              {replyTarget ? "Subreply" : "Reply"}
             </label>
             <textarea
               className={styles.textarea}
@@ -190,7 +212,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
 
           <div className={styles.formActions}>
             <button className={styles.button} disabled={submissionState.status === "submitting"} type="submit">
-              {submissionState.status === "submitting" ? "Submitting..." : "Submit reply"}
+              {submissionState.status === "submitting" ? "Submitting..." : replyTarget ? "Submit subreply" : "Submit reply"}
             </button>
           </div>
         </form>
@@ -210,7 +232,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
         </div>
       )}
 
-      {repliesState.status === "ready" && repliesState.replies.length === 0 && (
+      {repliesState.status === "ready" && rootReplies.length === 0 && (
         <div className={styles.emptyState}>
           <h3 className={styles.emptyTitle}>No approved replies yet.</h3>
           <p className={styles.emptyText}>
@@ -219,19 +241,46 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
         </div>
       )}
 
-      {repliesState.status === "ready" && repliesState.replies.length > 0 && (
+      {repliesState.status === "ready" && rootReplies.length > 0 && (
         <div className={styles.replyList}>
-          {repliesState.replies.map((reply) => (
-            <article className={styles.replyCard} key={reply.id}>
-              <div className={styles.articleMeta}>
-                <strong>{reply.authorName}</strong>
-                <time className={styles.articleDate} dateTime={reply.createdAt}>
-                  Posted {formatBlogDate(reply.createdAt)}
-                </time>
-              </div>
-              <p className={styles.replyBody}>{reply.body}</p>
-            </article>
-          ))}
+          {rootReplies.map((reply) => {
+            const childReplies = getChildReplies(reply.id);
+
+            return (
+              <article className={styles.replyThread} key={reply.id}>
+                <div className={styles.replyCard}>
+                  <div className={styles.articleMeta}>
+                    <strong>{reply.authorName}</strong>
+                    <time className={styles.articleDate} dateTime={reply.createdAt}>
+                      Posted {formatBlogDate(reply.createdAt)}
+                    </time>
+                  </div>
+                  <p className={styles.replyBody}>{reply.body}</p>
+                  <div className={styles.formActions}>
+                    <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => setReplyTarget(reply)} type="button">
+                      Reply
+                    </button>
+                  </div>
+                </div>
+
+                {childReplies.length > 0 ? (
+                  <div className={styles.replyChildren}>
+                    {childReplies.map((childReply) => (
+                      <article className={`${styles.replyCard} ${styles.replyCardNested}`} key={childReply.id}>
+                        <div className={styles.articleMeta}>
+                          <strong>{childReply.authorName}</strong>
+                          <time className={styles.articleDate} dateTime={childReply.createdAt}>
+                            Posted {formatBlogDate(childReply.createdAt)}
+                          </time>
+                        </div>
+                        <p className={styles.replyBody}>{childReply.body}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       )}
     </section>

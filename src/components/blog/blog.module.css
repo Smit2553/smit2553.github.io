@@ -485,6 +485,11 @@
   gap: 1rem;
 }
 
+.replyThread {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .replyCard {
   display: grid;
   gap: 0.75rem;
@@ -493,6 +498,35 @@
   border-radius: 12px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.replyChildren {
+  display: grid;
+  gap: 0.75rem;
+  margin-left: 2rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(118, 171, 174, 0.2);
+}
+
+.replyCardNested {
+  background-color: #ffffff;
+}
+
+.replyTargetCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(118, 171, 174, 0.18);
+  border-radius: 10px;
+  background-color: rgba(118, 171, 174, 0.08);
+}
+
+.replyTargetText {
+  margin: 0;
+  color: #35585a;
 }
 
 .replyBody {
@@ -671,6 +705,11 @@
 
   .articleCover {
     max-height: 280px;
+  }
+
+  .replyChildren {
+    margin-left: 0.85rem;
+    padding-left: 0.75rem;
   }
 
   .cardGrid {

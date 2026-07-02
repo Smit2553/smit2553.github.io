@@ -22,6 +22,7 @@ export type BlogLikeResult = {
 
 export type BlogReply = {
   id: string;
+  parentReplyId: string | null;
   authorName: string;
   body: string;
   createdAt: string;
@@ -31,6 +32,7 @@ export type BlogReply = {
 type BlogReplySubmission = {
   authorName: string;
   body: string;
+  parentReplyId?: string | null;
 };
 
 type BlogListResponse = {

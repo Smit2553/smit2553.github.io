@@ -17,6 +17,7 @@ export type ReplyStatus = "pending" | "approved" | "rejected";
 
 export interface PublicReply {
   id: string;
+  parentReplyId: string | null;
   authorName: string;
   body: string;
   createdAt: string;
@@ -167,6 +168,7 @@ function toReplyStatus(value: string): ReplyStatus {
 function toPublicReply(row: ReplyRow): PublicReply {
   return {
     id: row.id,
+    parentReplyId: row.parent_reply_id,
     authorName: normalizeText(row.author_name),
     body: row.body,
     createdAt: row.created_at,
@@ -210,10 +212,19 @@ async function getPublishedReplyPost(slug: string) {
 
 export async function listPublishedBlogRepliesBySlug(slug: string): Promise<PublicReply[]> {
   const post = await getPublishedReplyPost(slug);
+  const approvedReplies = await getRepliesByPostIdAndStatus(post.id, "approved");
+  const approvedReplyLookup = new Map(approvedReplies.map((reply) => [reply.id, reply]));
 
-  // Public replies are flat only; hide any legacy threaded rows from the public API.
-  return (await getRepliesByPostIdAndStatus(post.id, "approved"))
-    .filter((reply) => reply.parent_reply_id === null)
+  return approvedReplies
+    .filter((reply) => {
+      if (reply.parent_reply_id === null) {
+        return true;
+      }
+
+      const parentReply = approvedReplyLookup.get(reply.parent_reply_id);
+
+      return parentReply !== undefined && parentReply.parent_reply_id === null;
+    })
     .map(toPublicReply);
 }
 
@@ -227,14 +238,26 @@ export async function createPublishedBlogReplyBySlug(slug: string, body: unknown
   const parentReplyId = readOptionalTextField(parentReplyIdValue, "Parent reply id");
 
   if (parentReplyId !== null) {
-    throw new ReplyError(400, "Nested replies are not supported.");
+    const parentReply = await getReplyById(parentReplyId);
+
+    if (!parentReply || parentReply.post_id !== post.id) {
+      throw new ReplyError(404, "Parent reply not found.");
+    }
+
+    if (parentReply.parent_reply_id !== null) {
+      throw new ReplyError(400, "Replies can only be nested one level deep.");
+    }
+
+    if (parentReply.status !== "approved") {
+      throw new ReplyError(400, "You can only reply to approved replies.");
+    }
   }
 
   const now = nowIso();
   const seed: ReplySeed = {
     id: crypto.randomUUID(),
     postId: post.id,
-    parentReplyId: null,
+    parentReplyId,
     authorName,
     authorEmail,
     body: replyBody,
