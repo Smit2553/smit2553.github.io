@@ -34,4 +34,4 @@
 - Use `npm run build` as the default verification step because it runs the client typecheck/build and the server typecheck.
 
 ## Agent Workflow
-- Prefer using subagents wherever possible for repo exploration or other parallelizable investigation work.
+- Prefer using subagents wherever possible. 
