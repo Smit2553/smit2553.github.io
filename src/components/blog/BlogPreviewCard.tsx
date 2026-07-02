@@ -16,6 +16,12 @@ export default function BlogPreviewCard({ post }: BlogPreviewCardProps) {
         className={styles.postCardBodyLink}
         to={`/blog/${encodeURIComponent(post.slug)}`}
       >
+        {post.coverImageUrl ? (
+          <div className={styles.postCardCoverWrap}>
+            <img alt="" className={styles.postCardCover} loading="lazy" src={post.coverImageUrl} />
+          </div>
+        ) : null}
+
         <div className={styles.postCardMeta}>
           <time className={styles.postCardDate} dateTime={post.publishedAt}>
             Published {formatBlogDate(post.publishedAt)}

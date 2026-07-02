@@ -37,6 +37,7 @@ export interface PublicBlogPostSummary {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   excerpt: string;
   publishedAt: string;
   updatedAt: string;
@@ -99,6 +100,7 @@ function toPublicBlogPostSummary(row: PublishedBlogPostSummaryRow): PublicBlogPo
     slug: normalizeText(row.slug),
     title: normalizeText(row.title),
     summary: normalizeNullableText(row.summary),
+    coverImageUrl: normalizeNullableText(row.cover_image_url),
     excerpt: summary.length === 0 ? "No preview available yet." : summary.length <= 180 ? summary : `${summary.slice(0, 177).trimEnd()}...`,
     publishedAt: row.published_at ?? row.created_at,
     updatedAt: row.updated_at,

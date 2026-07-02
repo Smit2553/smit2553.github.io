@@ -159,6 +159,12 @@ export default function BlogPostPage() {
           </div>
         </header>
 
+        {post.coverImageUrl ? (
+          <div className={styles.articleCoverWrap}>
+            <img alt="" className={styles.articleCover} src={post.coverImageUrl} />
+          </div>
+        ) : null}
+
         <div className={styles.articleContent}>
           <MarkdownContent content={post.content} />
         </div>

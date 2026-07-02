@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS posts (
   slug text NOT NULL UNIQUE,
   title text NOT NULL,
   summary text,
+  cover_image_url text,
   content text NOT NULL,
   status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
   published_at text,

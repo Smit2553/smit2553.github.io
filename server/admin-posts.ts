@@ -17,6 +17,7 @@ export interface AdminPostSummary {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   status: string;
   publishedAt: string | null;
   createdAt: string;
@@ -41,6 +42,8 @@ interface AdminPostPayload {
   title?: unknown;
   slug?: unknown;
   summary?: unknown;
+  coverImageUrl?: unknown;
+  cover_image_url?: unknown;
   content?: unknown;
   status?: unknown;
 }
@@ -97,6 +100,34 @@ function readSummaryField(value: unknown): string | null {
   return normalized.length === 0 ? null : normalized;
 }
 
+function readCoverImageUrlField(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new AdminPostError(400, "Cover image URL must be a string or null.");
+  }
+
+  const normalized = value.trim();
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("invalid");
+    }
+  } catch {
+    throw new AdminPostError(400, "Cover image URL must be a valid http or https URL.");
+  }
+
+  return normalized;
+}
+
 function readContentField(value: unknown): string {
   if (typeof value !== "string") {
     throw new AdminPostError(400, "Content is required.");
@@ -133,6 +164,7 @@ function toAdminPostSummary(row: AdminPostRow): AdminPostSummary {
     slug: normalizeText(row.slug),
     title: normalizeText(row.title),
     summary: normalizeNullableText(row.summary),
+    coverImageUrl: normalizeNullableText(row.cover_image_url),
     status: row.status,
     publishedAt: row.published_at,
     createdAt: row.created_at,
@@ -153,6 +185,7 @@ function toAdminPostDetailFromValues(values: AdminPostSeed): AdminPostDetail {
     slug: normalizeText(values.slug),
     title: normalizeText(values.title),
     summary: normalizeNullableText(values.summary),
+    coverImageUrl: normalizeNullableText(values.coverImageUrl),
     status: values.status,
     publishedAt: values.publishedAt,
     createdAt: values.createdAt,
@@ -191,6 +224,9 @@ export async function createAdminPost(body: unknown): Promise<AdminPostDetail> {
   const summary = Object.prototype.hasOwnProperty.call(payload, "summary")
     ? readSummaryField(payload.summary)
     : null;
+  const coverImageUrl = Object.prototype.hasOwnProperty.call(payload, "coverImageUrl") || Object.prototype.hasOwnProperty.call(payload, "cover_image_url")
+    ? readCoverImageUrlField(payload.coverImageUrl ?? payload.cover_image_url)
+    : null;
   const content = readContentField(payload.content);
   const status = Object.prototype.hasOwnProperty.call(payload, "status")
     ? readEditableStatus(payload.status)
@@ -204,6 +240,7 @@ export async function createAdminPost(body: unknown): Promise<AdminPostDetail> {
     slug,
     title,
     summary,
+    coverImageUrl,
     content,
     status,
     publishedAt: status === "published" ? now : null,
@@ -238,14 +275,18 @@ export async function updateAdminPost(id: string, body: unknown): Promise<AdminP
   const hasSummary = Object.prototype.hasOwnProperty.call(payload, "summary");
   const hasContent = Object.prototype.hasOwnProperty.call(payload, "content");
   const hasStatus = Object.prototype.hasOwnProperty.call(payload, "status");
+  const hasCoverImageUrl = Object.prototype.hasOwnProperty.call(payload, "coverImageUrl") || Object.prototype.hasOwnProperty.call(payload, "cover_image_url");
 
-  if (!hasTitle && !hasSlug && !hasSummary && !hasContent && !hasStatus) {
+  if (!hasTitle && !hasSlug && !hasSummary && !hasCoverImageUrl && !hasContent && !hasStatus) {
     throw new AdminPostError(400, "At least one post field is required.");
   }
 
   const title = hasTitle ? readRequiredTextField(payload.title, "Title") : existing.title;
   const slug = hasSlug ? readRequiredTextField(payload.slug, "Slug") : existing.slug;
   const summary = hasSummary ? readSummaryField(payload.summary) : existing.summary;
+  const coverImageUrl = hasCoverImageUrl
+    ? readCoverImageUrlField(payload.coverImageUrl ?? payload.cover_image_url)
+    : existing.cover_image_url;
   const content = hasContent ? readContentField(payload.content) : existing.content;
   const status = hasStatus ? readEditableStatus(payload.status) : existing.status;
   const now = nowIso();
@@ -261,6 +302,7 @@ export async function updateAdminPost(id: string, body: unknown): Promise<AdminP
     slug,
     title,
     summary,
+    coverImageUrl,
     content,
     status,
     publishedAt,

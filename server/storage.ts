@@ -93,6 +93,7 @@ export interface PublishedBlogPostSummaryRow {
   slug: string;
   title: string;
   summary: string | null;
+  cover_image_url: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -108,6 +109,7 @@ export interface AdminPostRow {
   slug: string;
   title: string;
   summary: string | null;
+  cover_image_url: string | null;
   content: string;
   status: string;
   published_at: string | null;
@@ -120,6 +122,7 @@ export interface AdminPostSeed {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   content: string;
   status: string;
   publishedAt: string | null;
@@ -316,6 +319,7 @@ export function getPublishedBlogPosts(limit?: number): Promise<PublishedBlogPost
       slug,
       title,
       summary,
+      cover_image_url,
       published_at,
       created_at,
       updated_at,
@@ -338,6 +342,7 @@ export function getPublishedBlogPostBySlug(slug: string): Promise<PublishedBlogP
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       published_at,
       created_at,
@@ -357,6 +362,7 @@ export function getPublishedBlogPostById(id: string): Promise<PublishedBlogPostD
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       published_at,
       created_at,
@@ -530,6 +536,7 @@ export function getAdminPosts(): Promise<AdminPostRow[]> {
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       status,
       published_at,
@@ -546,6 +553,7 @@ export function getAdminPostById(id: string): Promise<AdminPostRow | undefined> 
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       status,
       published_at,
@@ -565,6 +573,7 @@ export function getAdminPostBySlug(slug: string): Promise<AdminPostRow | undefin
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       status,
       published_at,
@@ -584,17 +593,19 @@ export function insertAdminPost(seed: AdminPostSeed): Promise<void> {
       slug,
       title,
       summary,
+      cover_image_url,
       content,
       status,
       published_at,
       created_at,
       updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
       seed.id,
       seed.slug,
       seed.title,
       seed.summary,
+      seed.coverImageUrl,
       seed.content,
       seed.status,
       seed.publishedAt,
@@ -610,15 +621,17 @@ export function updateAdminPost(seed: AdminPostSeed): Promise<void> {
       slug = $1,
       title = $2,
       summary = $3,
-      content = $4,
-      status = $5,
-      published_at = $6,
-      updated_at = $7
-    WHERE id = $8`,
+      cover_image_url = $4,
+      content = $5,
+      status = $6,
+      published_at = $7,
+      updated_at = $8
+    WHERE id = $9`,
     [
       seed.slug,
       seed.title,
       seed.summary,
+      seed.coverImageUrl,
       seed.content,
       seed.status,
       seed.publishedAt,

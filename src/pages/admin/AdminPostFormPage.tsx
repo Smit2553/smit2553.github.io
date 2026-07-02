@@ -16,6 +16,7 @@ import {
 
 type FormValues = {
   content: string;
+  coverImageUrl: string;
   slug: string;
   status: AdminPostStatus;
   summary: string;
@@ -40,6 +41,7 @@ type LoadState =
 function createEmptyForm(): FormValues {
   return {
     content: "",
+    coverImageUrl: "",
     slug: "",
     status: "draft",
     summary: "",
@@ -50,6 +52,7 @@ function createEmptyForm(): FormValues {
 function toFormValues(post: AdminPost): FormValues {
   return {
     content: post.content,
+    coverImageUrl: post.coverImageUrl ?? "",
     slug: post.slug,
     status: post.status,
     summary: post.summary ?? "",
@@ -66,6 +69,7 @@ function isFormValues(value: unknown): value is FormValues {
 
   return (
     typeof form.content === "string"
+    && typeof form.coverImageUrl === "string"
     && typeof form.slug === "string"
     && (form.status === "draft" || form.status === "published")
     && typeof form.summary === "string"
@@ -233,6 +237,7 @@ export default function AdminPostFormPage() {
     const slug = form.slug.trim();
     const title = form.title.trim();
     const summary = form.summary.trim();
+    const coverImageUrl = form.coverImageUrl.trim();
 
     if (slug.length === 0 || title.length === 0 || form.content.trim().length === 0) {
       setNotice("Slug, title, and content are required.");
@@ -244,6 +249,7 @@ export default function AdminPostFormPage() {
     try {
       const payload = {
         content: form.content,
+        coverImageUrl: coverImageUrl.length > 0 ? coverImageUrl : null,
         slug,
         status: form.status,
         summary: summary.length > 0 ? summary : null,
@@ -451,6 +457,21 @@ export default function AdminPostFormPage() {
                 <span className={styles.helper}>Shown in the admin list and the public preview card.</span>
               </label>
 
+              <label className={styles.field} htmlFor="post-cover-image-url">
+                <span className={styles.label}>Cover image URL</span>
+                <input
+                  className={styles.input}
+                  id="post-cover-image-url"
+                  name="coverImageUrl"
+                  onChange={(event) => updateForm({ coverImageUrl: event.target.value })}
+                  placeholder="https://example.com/cover-image.jpg"
+                  spellCheck={false}
+                  type="url"
+                  value={form.coverImageUrl}
+                />
+                <span className={styles.helper}>Optional. Shown above the article and on public preview cards.</span>
+              </label>
+
               <label className={styles.field} htmlFor="post-content">
                 <span className={styles.label}>Markdown content</span>
                 <textarea
@@ -462,7 +483,7 @@ export default function AdminPostFormPage() {
                   rows={18}
                   value={form.content}
                 />
-                <span className={styles.helper}>Headings, lists, links, and code fences are supported.</span>
+                <span className={styles.helper}>Headings, lists, links, code fences, and markdown image syntax are supported.</span>
               </label>
 
               <div className={styles.formActions}>

@@ -167,6 +167,29 @@
   text-decoration: none;
 }
 
+.postCardCoverWrap,
+.articleCoverWrap {
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(118, 171, 174, 0.08);
+}
+
+.postCardCover,
+.articleCover {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.postCardCover {
+  aspect-ratio: 16 / 9;
+}
+
+.articleCover {
+  max-height: 460px;
+}
+
 .postCardBodyLink:focus-visible {
   outline: 2px solid rgba(118, 171, 174, 0.5);
   outline-offset: 4px;
@@ -644,6 +667,10 @@
   .emptyState,
   .replyCard {
     padding: 1rem;
+  }
+
+  .articleCover {
+    max-height: 280px;
   }
 
   .cardGrid {

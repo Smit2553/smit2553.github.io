@@ -3,6 +3,7 @@ export type BlogListItem = {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   excerpt: string;
   publishedAt: string;
   updatedAt: string;

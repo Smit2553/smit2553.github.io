@@ -9,6 +9,7 @@ export interface AdminPostSummary {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   status: AdminPostStatus;
   publishedAt: string | null;
   createdAt: string;
@@ -23,6 +24,7 @@ export interface AdminPostInput {
   slug: string;
   title: string;
   summary: string | null;
+  coverImageUrl: string | null;
   content: string;
   status: AdminPostStatus;
 }
