@@ -6,6 +6,7 @@ import {
   submitBlogReply,
   type BlogReply,
 } from "../../lib/blog";
+import BlogReplyLikeButton from "./BlogReplyLikeButton";
 import styles from "./blog.module.css";
 
 type BlogRepliesSectionProps = {
@@ -257,6 +258,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
                   </div>
                   <p className={styles.replyBody}>{reply.body}</p>
                   <div className={styles.formActions}>
+                    <BlogReplyLikeButton initialLikeCount={reply.likeCount} replyId={reply.id} slug={slug} title={`reply from ${reply.authorName}`} />
                     <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => setReplyTarget(reply)} type="button">
                       Reply
                     </button>
@@ -274,6 +276,14 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
                           </time>
                         </div>
                         <p className={styles.replyBody}>{childReply.body}</p>
+                        <div className={styles.formActions}>
+                          <BlogReplyLikeButton
+                            initialLikeCount={childReply.likeCount}
+                            replyId={childReply.id}
+                            slug={slug}
+                            title={`reply from ${childReply.authorName}`}
+                          />
+                        </div>
                       </article>
                     ))}
                   </div>

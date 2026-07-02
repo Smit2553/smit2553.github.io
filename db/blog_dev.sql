@@ -52,6 +52,14 @@ CREATE TABLE IF NOT EXISTS replies (
   updated_at text NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS reply_likes (
+  id text PRIMARY KEY,
+  reply_id text NOT NULL REFERENCES replies(id) ON DELETE CASCADE,
+  visitor_key text NOT NULL,
+  created_at text NOT NULL,
+  UNIQUE (reply_id, visitor_key)
+);
+
 CREATE TABLE IF NOT EXISTS admin_users (
   id text PRIMARY KEY,
   username text NOT NULL UNIQUE,
@@ -77,5 +85,6 @@ CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id ON post_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_likes_post_id ON likes(post_id);
 CREATE INDEX IF NOT EXISTS idx_replies_post_id ON replies(post_id);
 CREATE INDEX IF NOT EXISTS idx_replies_parent_reply_id ON replies(parent_reply_id);
+CREATE INDEX IF NOT EXISTS idx_reply_likes_reply_id ON reply_likes(reply_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_admin_user_id ON sessions(admin_user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);

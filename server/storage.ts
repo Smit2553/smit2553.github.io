@@ -52,6 +52,13 @@ export interface BlogLikeSeed {
   createdAt: string;
 }
 
+export interface ReplyLikeSeed {
+  id: string;
+  replyId: string;
+  visitorKey: string;
+  createdAt: string;
+}
+
 export interface ReplyRow {
   id: string;
   post_id: string;
@@ -62,6 +69,11 @@ export interface ReplyRow {
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ReplyLikeCountRow {
+  reply_id: string;
+  like_count: number;
 }
 
 export interface ReplyWithPostRow extends ReplyRow {
@@ -406,6 +418,55 @@ export async function deleteBlogLike(postId: string, visitorKey: string): Promis
   );
 
   return result.length > 0;
+}
+
+export async function createReplyLike(seed: ReplyLikeSeed): Promise<boolean> {
+  const result = await queryAll<{ id: string }>(
+    `INSERT INTO ${tableName("reply_likes")} (
+        id,
+        reply_id,
+        visitor_key,
+        created_at
+      ) VALUES ($1, $2, $3, $4)
+      ON CONFLICT (reply_id, visitor_key) DO NOTHING
+      RETURNING id`,
+    [seed.id, seed.replyId, seed.visitorKey, seed.createdAt],
+  );
+
+  return result.length > 0;
+}
+
+export async function deleteReplyLike(replyId: string, visitorKey: string): Promise<boolean> {
+  const result = await queryAll<{ id: string }>(
+    `DELETE FROM ${tableName("reply_likes")}
+      WHERE reply_id = $1 AND visitor_key = $2
+      RETURNING id`,
+    [replyId, visitorKey],
+  );
+
+  return result.length > 0;
+}
+
+export async function getReplyLikeCountByReplyId(replyId: string): Promise<number> {
+  const row = await queryOne<{ like_count: number }>(`SELECT COUNT(*)::int AS like_count FROM ${tableName("reply_likes")} WHERE reply_id = $1`, [replyId]);
+
+  return row?.like_count ?? 0;
+}
+
+export async function getReplyLikeCountsByReplyIds(replyIds: readonly string[]): Promise<Map<string, number>> {
+  if (replyIds.length === 0) {
+    return new Map();
+  }
+
+  const rows = await queryAll<ReplyLikeCountRow>(
+    `SELECT reply_id, COUNT(*)::int AS like_count
+      FROM ${tableName("reply_likes")}
+      WHERE reply_id = ANY($1)
+      GROUP BY reply_id`,
+    [replyIds],
+  );
+
+  return new Map(rows.map((row) => [row.reply_id, row.like_count]));
 }
 
 export function getReplyById(id: string): Promise<ReplyRow | undefined> {

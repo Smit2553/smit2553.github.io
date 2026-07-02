@@ -1,8 +1,12 @@
 import crypto from "node:crypto";
 import {
+  createReplyLike,
+  deleteReplyLike,
   deleteReplyById as deleteReplyRow,
   getAdminReplies as getAdminReplyRows,
   getPublishedBlogPostBySlug,
+  getReplyLikeCountByReplyId,
+  getReplyLikeCountsByReplyIds,
   getReplyById,
   getRepliesByPostIdAndStatus,
   insertReply as insertReplyRow,
@@ -20,8 +24,15 @@ export interface PublicReply {
   parentReplyId: string | null;
   authorName: string;
   body: string;
+  likeCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PublicReplyLikeResult {
+  ok: true;
+  liked: boolean;
+  likeCount: number;
 }
 
 export interface AdminReplyPost {
@@ -65,11 +76,15 @@ interface ReplyPayload {
   body?: unknown;
   parentReplyId?: unknown;
   parent_reply_id?: unknown;
+  visitorKey?: unknown;
+  visitor_key?: unknown;
 }
 
 interface ReplyStatusPayload {
   status?: unknown;
 }
+
+const visitorKeyPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -157,6 +172,24 @@ function readReplyStatus(value: unknown): ReplyStatus {
   throw new ReplyError(400, "Status must be approved or rejected.");
 }
 
+function readVisitorKey(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new ReplyError(400, "Visitor key is required.");
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized.length === 0) {
+    throw new ReplyError(400, "Visitor key is required.");
+  }
+
+  if (!visitorKeyPattern.test(normalized)) {
+    throw new ReplyError(400, "Visitor key must be a UUID.");
+  }
+
+  return normalized;
+}
+
 function toReplyStatus(value: string): ReplyStatus {
   if (value === "pending" || value === "approved" || value === "rejected") {
     return value;
@@ -165,12 +198,13 @@ function toReplyStatus(value: string): ReplyStatus {
   throw new ReplyError(500, "Invalid reply status.");
 }
 
-function toPublicReply(row: ReplyRow): PublicReply {
+function toPublicReply(row: ReplyRow, likeCount = 0): PublicReply {
   return {
     id: row.id,
     parentReplyId: row.parent_reply_id,
     authorName: normalizeText(row.author_name),
     body: row.body,
+    likeCount,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -214,18 +248,18 @@ export async function listPublishedBlogRepliesBySlug(slug: string): Promise<Publ
   const post = await getPublishedReplyPost(slug);
   const approvedReplies = await getRepliesByPostIdAndStatus(post.id, "approved");
   const approvedReplyLookup = new Map(approvedReplies.map((reply) => [reply.id, reply]));
+  const visibleReplies = approvedReplies.filter((reply) => {
+    if (reply.parent_reply_id === null) {
+      return true;
+    }
 
-  return approvedReplies
-    .filter((reply) => {
-      if (reply.parent_reply_id === null) {
-        return true;
-      }
+    const parentReply = approvedReplyLookup.get(reply.parent_reply_id);
 
-      const parentReply = approvedReplyLookup.get(reply.parent_reply_id);
+    return parentReply !== undefined && parentReply.parent_reply_id === null;
+  });
+  const likeCounts = await getReplyLikeCountsByReplyIds(visibleReplies.map((reply) => reply.id));
 
-      return parentReply !== undefined && parentReply.parent_reply_id === null;
-    })
-    .map(toPublicReply);
+  return visibleReplies.map((reply) => toPublicReply(reply, likeCounts.get(reply.id) ?? 0));
 }
 
 export async function createPublishedBlogReplyBySlug(slug: string, body: unknown): Promise<PublicReply> {
@@ -278,7 +312,42 @@ export async function createPublishedBlogReplyBySlug(slug: string, body: unknown
     status: seed.status,
     created_at: seed.createdAt,
     updated_at: seed.updatedAt,
+  }, 0);
+}
+
+export async function likePublishedBlogReplyBySlug(slug: string, replyId: string, body: unknown): Promise<PublicReplyLikeResult> {
+  const post = await getPublishedReplyPost(slug);
+  const normalizedReplyId = normalizeReplyId(replyId);
+  const payload = requireObjectBody(body);
+  const visitorKey = readVisitorKey(payload.visitorKey ?? payload.visitor_key);
+  const reply = await getReplyById(normalizedReplyId);
+
+  if (!reply || reply.post_id !== post.id || reply.status !== "approved") {
+    throw new ReplyError(404, "Reply not found.");
+  }
+
+  if (reply.parent_reply_id !== null) {
+    const parentReply = await getReplyById(reply.parent_reply_id);
+
+    if (!parentReply || parentReply.status !== "approved" || parentReply.parent_reply_id !== null) {
+      throw new ReplyError(404, "Reply not found.");
+    }
+  }
+
+  const created = await createReplyLike({
+    id: crypto.randomUUID(),
+    replyId: reply.id,
+    visitorKey,
+    createdAt: nowIso(),
   });
+
+  const liked = created ? true : !(await deleteReplyLike(reply.id, visitorKey));
+
+  return {
+    ok: true,
+    liked,
+    likeCount: await getReplyLikeCountByReplyId(reply.id),
+  };
 }
 
 export async function listAdminReplies(): Promise<AdminReply[]> {

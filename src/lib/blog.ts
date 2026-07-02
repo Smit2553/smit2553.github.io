@@ -25,6 +25,7 @@ export type BlogReply = {
   parentReplyId: string | null;
   authorName: string;
   body: string;
+  likeCount: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -57,6 +58,8 @@ const visitorKeyStorageKey = "blog:visitor-key";
 const visitorKeyCookieName = "blog-visitor-key";
 const likedPostStorageKey = "blog:liked-post-ids";
 const likedPostCookieName = "blog-liked-post-ids";
+const likedReplyStorageKey = "blog:liked-reply-ids";
+const likedReplyCookieName = "blog-liked-reply-ids";
 const cookieMaxAgeSeconds = 60 * 60 * 24 * 365;
 const visitorKeyPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -242,12 +245,12 @@ export function getBlogVisitorKey(): string {
   return visitorKey;
 }
 
-function readLikedBlogPostIds(): string[] {
+function readPersistedIdList(storageKey: string, cookieName: string): string[] {
   if (typeof window === "undefined") {
     return [];
   }
 
-  const storedValue = readPersistedValue(likedPostStorageKey, likedPostCookieName);
+  const storedValue = readPersistedValue(storageKey, cookieName);
 
   if (!storedValue) {
     return [];
@@ -266,12 +269,28 @@ function readLikedBlogPostIds(): string[] {
   }
 }
 
-function writeLikedBlogPostIds(postIds: string[]): void {
+function writePersistedIdList(storageKey: string, cookieName: string, ids: string[]): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  writePersistedValue(likedPostStorageKey, likedPostCookieName, JSON.stringify(postIds));
+  writePersistedValue(storageKey, cookieName, JSON.stringify(ids));
+}
+
+function readLikedBlogPostIds(): string[] {
+  return readPersistedIdList(likedPostStorageKey, likedPostCookieName);
+}
+
+function writeLikedBlogPostIds(postIds: string[]): void {
+  writePersistedIdList(likedPostStorageKey, likedPostCookieName, postIds);
+}
+
+function readLikedBlogReplyIds(): string[] {
+  return readPersistedIdList(likedReplyStorageKey, likedReplyCookieName);
+}
+
+function writeLikedBlogReplyIds(replyIds: string[]): void {
+  writePersistedIdList(likedReplyStorageKey, likedReplyCookieName, replyIds);
 }
 
 function normalizePostId(postId: string): string {
@@ -312,6 +331,42 @@ export function unmarkBlogPostLiked(postId: string): void {
   }
 
   writeLikedBlogPostIds(readLikedBlogPostIds().filter((likedPostId) => likedPostId !== normalizedPostId));
+}
+
+export function hasLikedBlogReply(replyId: string): boolean {
+  const normalizedReplyId = normalizePostId(replyId);
+
+  if (normalizedReplyId.length === 0) {
+    return false;
+  }
+
+  return readLikedBlogReplyIds().includes(normalizedReplyId);
+}
+
+export function markBlogReplyLiked(replyId: string): void {
+  const normalizedReplyId = normalizePostId(replyId);
+
+  if (normalizedReplyId.length === 0) {
+    return;
+  }
+
+  const likedReplyIds = readLikedBlogReplyIds();
+
+  if (likedReplyIds.includes(normalizedReplyId)) {
+    return;
+  }
+
+  writeLikedBlogReplyIds([...likedReplyIds, normalizedReplyId]);
+}
+
+export function unmarkBlogReplyLiked(replyId: string): void {
+  const normalizedReplyId = normalizePostId(replyId);
+
+  if (normalizedReplyId.length === 0) {
+    return;
+  }
+
+  writeLikedBlogReplyIds(readLikedBlogReplyIds().filter((likedReplyId) => likedReplyId !== normalizedReplyId));
 }
 
 export async function fetchBlogPosts(limit?: number): Promise<BlogListItem[]> {
@@ -383,4 +438,12 @@ export async function likeBlogPostById(
   visitorKey = getBlogVisitorKey(),
 ): Promise<BlogLikeResult> {
   return requestBlogLike(`/api/posts/id/${encodeURIComponent(postId)}/likes`, visitorKey);
+}
+
+export async function likeBlogReply(
+  slug: string,
+  replyId: string,
+  visitorKey = getBlogVisitorKey(),
+): Promise<BlogLikeResult> {
+  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/replies/${encodeURIComponent(replyId)}/likes`, visitorKey);
 }

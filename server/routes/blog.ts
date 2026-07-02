@@ -8,6 +8,7 @@ import {
 } from "../blog";
 import {
   createPublishedBlogReplyBySlug,
+  likePublishedBlogReplyBySlug,
   listPublishedBlogRepliesBySlug,
   ReplyError,
 } from "../replies";
@@ -91,6 +92,18 @@ blogRouter.post("/:slug/replies", async (request: Request, response: Response) =
     response.json({ ok: true });
   } catch (error) {
     respondWithReplyError(response, error, "Unable to submit reply.");
+  }
+});
+
+blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, response: Response) => {
+  try {
+    const slug = readRouteParam(request.params.slug);
+    const replyId = readRouteParam(request.params.replyId);
+    const result = await likePublishedBlogReplyBySlug(slug, replyId, request.body);
+
+    response.json(result);
+  } catch (error) {
+    respondWithReplyError(response, error, "Unable to like reply.");
   }
 });
 
