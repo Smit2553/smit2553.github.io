@@ -257,7 +257,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
                     </time>
                   </div>
                   <p className={styles.replyBody}>{reply.body}</p>
-                  <div className={styles.formActions}>
+                  <div className={`${styles.formActions} ${styles.replyActions}`}>
                     <BlogReplyLikeButton initialLikeCount={reply.likeCount} replyId={reply.id} slug={slug} title={`reply from ${reply.authorName}`} />
                     <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => setReplyTarget(reply)} type="button">
                       Reply
@@ -276,7 +276,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
                           </time>
                         </div>
                         <p className={styles.replyBody}>{childReply.body}</p>
-                        <div className={styles.formActions}>
+                        <div className={`${styles.formActions} ${styles.replyActions}`}>
                           <BlogReplyLikeButton
                             initialLikeCount={childReply.likeCount}
                             replyId={childReply.id}

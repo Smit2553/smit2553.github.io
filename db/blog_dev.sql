@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS posts (
   updated_at text NOT NULL
 );
 
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS cover_image_url text;
+
 CREATE TABLE IF NOT EXISTS tags (
   id text PRIMARY KEY,
   slug text NOT NULL UNIQUE,
