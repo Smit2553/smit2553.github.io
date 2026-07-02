@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { TypeAnimation } from "react-type-animation";
 import { Link } from "react-router-dom";
 import { FaFileAudio, FaPython, FaReact } from "react-icons/fa";
@@ -21,11 +22,17 @@ import {
   TbSql,
 } from "react-icons/tb";
 import LatestWritingSection from "../components/blog/LatestWritingSection";
-import ExperienceItem from "../components/experienceItem";
+import { EducationSection, ExperienceTimelineSection } from "../components/homeSections";
 import ProjectItem from "../components/projectItem";
 import styles from "../App.module.css";
 
 export default function HomePage() {
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+
+  function handleProjectToggle(projectId: string): void {
+    setOpenProjectId((current) => (current === projectId ? null : projectId));
+  }
+
   return (
     <div>
       <div className={styles.container}>
@@ -93,6 +100,14 @@ export default function HomePage() {
               Projects
             </motion.a>
             <motion.a
+              href="#education"
+              className={styles.link}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              Education
+            </motion.a>
+            <motion.a
               href="#experience"
               className={styles.link}
               whileHover={{ scale: 1.1 }}
@@ -144,6 +159,7 @@ export default function HomePage() {
 
       <div className={styles.projectContainer}>
         <ProjectItem
+          id="master-vault"
           title="Master Vault | HackPrinceton Spring 2025 Winner"
           description="Winner for Best AI/LLM Inference hosted on Modal. Transform digital distraction into productive learning through AI-powered podcast experiences"
           links={{
@@ -167,8 +183,11 @@ export default function HomePage() {
             <TbSql size={30} />,
             <TbBrandReactNative size={30} />,
           ]}
+          isExpanded={openProjectId === "master-vault"}
+          onToggle={handleProjectToggle}
         />
         <ProjectItem
+          id="offscript"
           title="Offscript | HackHarvard 2025"
           description="Practice Technical Interviews how they actually happen, through natural conversation."
           links={{
@@ -183,8 +202,11 @@ export default function HomePage() {
             <SiFastapi size={30} />,
             <FaFileAudio size={30} />,
           ]}
+          isExpanded={openProjectId === "offscript"}
+          onToggle={handleProjectToggle}
         />
         <ProjectItem
+          id="sip-and-play"
           title="Sip & Play | Codedex Summer Hackathon 2024 UI/UX Winner"
           description="Codédex Hack 2024 Winner: Website for a board game shop serving boba tea and small bites in Park Slope, Brooklyn."
           links={{
@@ -199,8 +221,11 @@ export default function HomePage() {
             <RiTailwindCssFill size={30} />,
             <TbBrandVite size={30} />,
           ]}
+          isExpanded={openProjectId === "sip-and-play"}
+          onToggle={handleProjectToggle}
         />
         <ProjectItem
+          id="healthsync"
           title="HealthSync | HackMIT 2024"
           description="Synchronizing hospital resources for efficient, patient-centered care."
           links={{
@@ -224,8 +249,11 @@ export default function HomePage() {
             <SiFastapi size={30} />,
           ]}
           image="/HealthSync.jpg"
+          isExpanded={openProjectId === "healthsync"}
+          onToggle={handleProjectToggle}
         />
         <ProjectItem
+          id="fiber"
           title="Fiber | UC Berkeley AI Hackathon 2024"
           description="AI powered nutrition app that helps you manage your diet better."
           links={{ github: "https://github.com/Smit2553/Fiber" }}
@@ -237,8 +265,11 @@ export default function HomePage() {
             <SiFlask size={30} />,
           ]}
           image="/fiberimage.jpg"
+          isExpanded={openProjectId === "fiber"}
+          onToggle={handleProjectToggle}
         />
         <ProjectItem
+          id="personal-website"
           title="Smit's Personal Website"
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
@@ -249,67 +280,16 @@ export default function HomePage() {
             <FaReact size={30} />,
             <SiTypescript size={30} />,
           ]}
+          isExpanded={openProjectId === "personal-website"}
+          onToggle={handleProjectToggle}
         />
       </div>
 
       <LatestWritingSection />
 
-      <div className={styles.moduleContainer}>
-        <h1 className={styles.moduleTitle} id="experience">
-          Experience
-        </h1>
-      </div>
-      <div className={styles.experienceContainer}>
-        <ExperienceItem
-          title="Undergraduate Researcher"
-          company="VISA Research Lab, Arizona State University"
-          duration="December 2025 - Present"
-          description="Conducting research in collaboration with VISA Research Lab on cutting-edge SSD storage technology."
-          logoUrl="/logos/visa_research_lab_logo.jpg"
-        />
-        <ExperienceItem
-          title="Software Engineering Intern"
-          company="Defined Bioscience"
-          duration="September 2025 - Present"
-          description="Software engineering intern working on biotechnology solutions."
-          logoUrl="/logos/defined_bioscience_logo.jpg"
-        />
-        <ExperienceItem
-          title="Undergraduate Teaching Assistant - Operating Systems (Linux kernel, Ubuntu)"
-          company="School of Computing and Augmented Intelligence, Arizona State University"
-          duration="August 2025 - December 2025"
-          description="Teaching assistant for operating systems course focusing on Linux kernel and Ubuntu."
-          logoUrl="/logos/asuicon.jpg"
-        />
-        <ExperienceItem
-          title="Research Technology Support Representative"
-          company="Knowledge Enterprise, Arizona State University"
-          duration="September 2024 - Present"
-          description="Knowledge Enterprise is the research arm of Arizona State University."
-          logoUrl="/logos/asuicon.jpg"
-        />
-        <ExperienceItem
-          title="Sponsor Coordinator"
-          company="PyBay"
-          duration="June 2022 - June 2023"
-          description="PyBay is the premier Python conference in the San Francisco Bay Area."
-          logoUrl="/logos/pybay_logo.jpg"
-        />
-        <ExperienceItem
-          title="Computer Lab Assistant"
-          company="De Anza College"
-          duration="January 2023 - March 2023"
-          description="De Anza College is a public community college in Cupertino, California."
-          logoUrl="/logos/de_anza.jpg"
-        />
-        <ExperienceItem
-          title="Database Intern"
-          company="Golden Gate University"
-          duration="July 2022 - February 2023"
-          description="Golden Gate University is a private university in San Francisco, California."
-          logoUrl="/logos/golden_gate_university_logo.jpg"
-        />
-      </div>
+      <EducationSection />
+
+      <ExperienceTimelineSection />
     </div>
   );
 }

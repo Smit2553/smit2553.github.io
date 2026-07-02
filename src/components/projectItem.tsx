@@ -1,24 +1,10 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useId } from "react";
 import styles from "./projectItem.module.css";
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
-
 type ProjectItemProps = {
+  id: string;
   title: string;
   description: string;
   links?: {
@@ -28,106 +14,120 @@ type ProjectItemProps = {
   icons?: ReactNode[];
   techStack: string[];
   image: string;
-  reverse?: boolean;
+  isExpanded: boolean;
+  onToggle: (id: string) => void;
 };
 
 export default function ProjectItem(props: ProjectItemProps) {
-  const [isContainerVisible, setContainerVisible] = useState(false);
+  const baseId = useId();
+  const shouldReduceMotion = useReducedMotion();
+  const titleId = `${baseId}-title`;
+  const panelId = `${baseId}-panel`;
+  const techId = `${baseId}-tech`;
 
   return (
-    <motion.div
+    <motion.article
       className={styles.projectContainer}
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1, transition: { duration: 0.3 } }}
-      viewport={{ amount: 0.3, once: true }}
-      onAnimationComplete={() => setContainerVisible(true)}
+      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
+      whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+      viewport={{ amount: 0.25, once: true }}
     >
-      {!props.reverse && (
-        <motion.img
-          src={props.image}
-          alt={props.title}
-          className={styles.image}
-          variants={staggerItem}
-        />
-      )}
-      <motion.div
-        className={
-          props.reverse
-            ? styles.contentContainerReverse
-            : styles.contentContainer
-        }
-        variants={staggerContainer}
-        initial="hidden"
-        animate={isContainerVisible ? "show" : "hidden"}
+      <button
+        type="button"
+        className={styles.summaryButton}
+        aria-expanded={props.isExpanded}
+        aria-controls={panelId}
+        aria-labelledby={titleId}
+        aria-describedby={props.techStack.length > 0 ? techId : undefined}
+        onClick={() => props.onToggle(props.id)}
       >
-        <motion.h3 variants={staggerItem}>{props.title}</motion.h3>
-        {props.techStack.length > 0 && (
-          <motion.ul className={styles.techStackList} variants={staggerItem}>
-            {props.techStack.map((tech, index) => (
-              <motion.li
-                key={tech}
-                className={styles.techStackItem}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                {props.icons?.[index] && (
-                  <span className={styles.icon}>{props.icons[index]}</span>
+        <span className={styles.summaryMedia}>
+          <img
+            src={props.image}
+            alt=""
+            className={styles.image}
+          />
+          <span className={styles.overlay}>
+            <span className={styles.overlayHeader}>
+              <span id={titleId} className={styles.title} role="heading" aria-level={3}>
+                {props.title}
+              </span>
+              <span className={styles.toggleText} aria-hidden="true">
+                {props.isExpanded ? "Collapse" : "Expand"}
+              </span>
+            </span>
+            {props.techStack.length > 0 && (
+              <span id={techId} className={styles.techStackList}>
+                {props.techStack.map((tech, index) => (
+                  <span key={`${tech}-${index}`} className={styles.techStackItem}>
+                    {props.icons?.[index] && (
+                      <span className={styles.icon}>{props.icons[index]}</span>
+                    )}
+                    {tech}
+                  </span>
+                ))}
+              </span>
+            )}
+          </span>
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {props.isExpanded ? (
+          <motion.div
+            id={panelId}
+            role="region"
+            aria-labelledby={titleId}
+            className={styles.details}
+            initial={shouldReduceMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.25, ease: "easeInOut" }}
+          >
+            <div className={styles.detailsInner}>
+              <p className={styles.description}>{props.description}</p>
+              <div className={styles.linksContainer}>
+                {props.links?.github && (
+                  <motion.a
+                    href={props.links.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.iconContainer}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <img
+                      src="/icons/logo-github.svg"
+                      alt="Github"
+                      width={30}
+                      height={30}
+                      className={styles.linkIcon}
+                    />
+                  </motion.a>
                 )}
-                {tech}
-              </motion.li>
-            ))}
-          </motion.ul>
-        )}
-        <motion.p variants={staggerItem}>{props.description}</motion.p>
-        <motion.div className={styles.linksContainer} variants={staggerItem}>
-          {props.links?.github && (
-            <motion.a
-              href={props.links.github}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.iconContainer}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              variants={staggerItem}
-            >
-              <img
-                src="/icons/logo-github.svg"
-                alt="Github"
-                width={30}
-                height={30}
-                className={styles.linkIcon}
-              />
-            </motion.a>
-          )}
-          {props.links?.live && (
-            <motion.a
-              href={props.links.live}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.iconContainer}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              variants={staggerItem}
-            >
-              <img
-                src="/icons/logo-web.svg"
-                alt="Live Website"
-                width={30}
-                height={30}
-                className={styles.linkIcon}
-              />
-            </motion.a>
-          )}
-        </motion.div>
-      </motion.div>
-      {props.reverse && (
-        <motion.img
-          src={props.image}
-          alt={props.title}
-          className={styles.image}
-          variants={staggerItem}
-        />
-      )}
-    </motion.div>
+                {props.links?.live && (
+                  <motion.a
+                    href={props.links.live}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.iconContainer}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <img
+                      src="/icons/logo-web.svg"
+                      alt="Live Website"
+                      width={30}
+                      height={30}
+                      className={styles.linkIcon}
+                    />
+                  </motion.a>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.article>
   );
 }

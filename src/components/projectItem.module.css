@@ -1,100 +1,222 @@
 .projectContainer {
-  background-color: #eeeeee;
-  padding: 1rem;
-  border-radius: 5px;
+  width: 100%;
+  margin: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  border: 1px solid rgba(34, 40, 49, 0.08);
+  box-shadow: 0 10px 28px rgba(34, 40, 49, 0.08);
   display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-  margin: 20px auto;
-  max-width: 1200px;
+  flex-direction: column;
+}
+
+.summaryButton {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: block;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.summaryButton:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(61, 101, 104, 0.45);
+  outline: 3px solid #3d6568;
+  outline-offset: 3px;
+}
+
+.summaryButton:hover .image,
+.summaryButton:focus-visible .image {
+  transform: scale(1.015);
+}
+
+.summaryMedia {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 20rem;
+  overflow: hidden;
+  background-color: #222831;
 }
 
 .image {
-  max-width: 50%;
-  max-height: 512px;
-  border-radius: 5px;
-  position: sticky;
-  top: 20px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
 }
 
-.contentContainer,
-.contentContainerReverse {
+.overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  background: linear-gradient(180deg, rgba(238, 238, 238, 0.05) 20%, rgba(34, 40, 49, 0.78) 100%);
+  color: #f9f9f9;
+}
+
+.overlayHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: flex-start;
-  margin-left: 20px;
-  flex: 1;
-  padding-left: 20px;
-  border-left: 2px solid #ccc;
-  min-height: 100vh;
+  gap: 0.75rem;
+}
+
+.title {
+  display: block;
+  max-width: 100%;
+  font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+  line-height: 1.15;
+  font-weight: 700;
+  color: #ffffff;
+  overflow-wrap: break-word;
+}
+
+.toggleText {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(249, 249, 249, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(249, 249, 249, 0.84);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .techStackList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.45rem;
 }
 
 .techStackItem {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  font-size: 1rem;
-  color: #333;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(249, 249, 249, 0.16);
+  color: rgba(249, 249, 249, 0.95);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  backdrop-filter: blur(4px);
 }
 
 .icon {
-  margin-right: 0.5rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  font-size: 1.2rem;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  font-size: 1.05rem;
 }
 
-.contentContainerReverse {
-  align-items: flex-end;
-  margin-right: 20px;
-  padding-left: 0;
-  padding-right: 20px;
-  border-left: none;
-  border-right: 2px solid #ccc;
+.details {
+  overflow: hidden;
+  background-color: #f9f9f9;
+  border-top: 1px solid rgba(34, 40, 49, 0.08);
+}
+
+.detailsInner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem clamp(1rem, 2.5vw, 1.5rem) 1.5rem;
+}
+
+.description {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+  max-width: 70ch;
 }
 
 .linksContainer {
   display: flex;
-  flex-direction: row;
-  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .iconContainer {
-  margin-right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background-color: #76abae;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(61, 101, 104, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.iconContainer:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+  box-shadow: 0 8px 20px rgba(61, 101, 104, 0.24);
+}
+
+.iconContainer:focus-visible {
+  outline: 2px solid rgba(61, 101, 104, 0.45);
+  outline-offset: 3px;
 }
 
 .linkIcon {
-  max-width: 100%;
-  height: auto;
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 @media (max-width: 1000px) {
-  .projectContainer {
-    flex-direction: column;
+  .summaryMedia {
+    min-height: 18rem;
   }
 
-  .image {
-    max-width: 100%;
-    position: relative;
-    top: auto;
+  .overlay {
+    gap: 0.7rem;
   }
 
-  .contentContainer,
-  .contentContainerReverse {
-    margin-left: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border: none;
-    min-height: 0;
+  .title {
+    max-width: 24ch;
+    font-size: clamp(1.15rem, 4vw, 1.5rem);
+  }
+
+  .techStackItem {
+    font-size: 0.82rem;
+    padding: 0.4rem 0.65rem;
+  }
+
+  .detailsInner {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .iconContainer {
+    transition: none;
+  }
+
+  .summaryButton:hover .image,
+  .summaryButton:focus-visible .image,
+  .iconContainer:hover {
+    transform: none;
   }
 }
