@@ -1,6 +1,6 @@
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { FaGraduationCap } from "react-icons/fa";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import styles from "./homeSections.module.css";
 
 type ExperienceEntry = {
@@ -140,61 +140,109 @@ export function EducationSection() {
 }
 
 export function ExperienceTimelineSection() {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const isInView = useInView(sectionRef, { amount: 0.3, once: true });
+  const targetRef = useRef<HTMLElement | null>(null);
+  const carouselRef = useRef<HTMLOListElement | null>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+  
+  const isInView = useInView(targetRef, { amount: 0.1, once: true });
   const shouldReduceMotion = useReducedMotion();
 
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end end"]
+  });
+
+  const { scrollYProgress: enterProgress } = useScroll({
+    target: targetRef,
+    offset: ["start end", "start start"]
+  });
+
+  const x = useTransform(scrollYProgress, [0, 1], [0, -scrollWidth]);
+  const scale = useTransform(enterProgress, [0, 1], [0.85, 1]);
+  const borderRadius = useTransform(enterProgress, [0, 1], [40, 0]);
+
+  useEffect(() => {
+    const measure = () => {
+      if (carouselRef.current && carouselRef.current.parentElement) {
+        const railWidth = carouselRef.current.scrollWidth;
+        const wrapperWidth = carouselRef.current.parentElement.clientWidth;
+        setScrollWidth(Math.max(0, railWidth - wrapperWidth));
+      }
+    };
+    
+    measure();
+    setTimeout(measure, 100);
+    setTimeout(measure, 500);
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
   return (
-    <section aria-labelledby="experience-title" className={styles.section} id="experience" ref={sectionRef}>
-      <div className={styles.sectionInner}>
-        <SectionHeader
-          eyebrow="Career"
-          title="Experience"
-          titleId="experience-title"
-          lead="A compact timeline of work and research that opens up as you reach it."
-        />
-
-        <motion.ol
-          aria-label="Experience timeline"
-          className={`${styles.timelineRail} ${isInView ? styles.timelineRailExpanded : ""}`}
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 24 }}
-          animate={isInView || shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-          transition={{ duration: shouldReduceMotion ? 0 : 0.35, ease: "easeOut" }}
+    <section aria-labelledby="experience-title" className={styles.experienceScrollTrack} id="experience" ref={targetRef}>
+      <div className={styles.experienceSticky}>
+        <motion.div 
+          className={styles.experienceStickyInner}
+          style={shouldReduceMotion ? {} : { scale, borderRadius }}
         >
-          {experienceEntries.map((entry, index) => (
-            <motion.li
-              className={styles.timelineItem}
-              key={`${entry.title}-${entry.company}`}
-              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
-              animate={isInView || shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.3, delay: shouldReduceMotion ? 0 : index * 0.06, ease: "easeOut" }}
-            >
-              <article className={styles.timelineCard}>
-                <div className={styles.timelineTopRow}>
-                  <span className={styles.timelineIndex}>{String(index + 1).padStart(2, "0")}</span>
-                  <p className={styles.timelineDuration}>{entry.duration}</p>
-                </div>
+          <div className={styles.experienceSectionInner}>
+            <SectionHeader
+              eyebrow="Career"
+              title="Experience"
+              titleId="experience-title"
+              lead="A comprehensive timeline of my professional work and research."
+            />
 
-                <div className={styles.timelineBody}>
-                  <img
-                    alt={`${entry.company} logo`}
-                    className={styles.timelineLogo}
-                    height={48}
-                    loading="lazy"
-                    src={entry.logoUrl}
-                    width={48}
-                  />
-                  <div className={styles.timelineCopy}>
-                    <h3 className={styles.timelineTitle}>{entry.title}</h3>
-                    <h4 className={styles.timelineCompany}>{entry.company}</h4>
-                  </div>
-                </div>
+            <div className={styles.timelineWrapper}>
+              <motion.ol
+                aria-label="Experience timeline"
+                className={styles.timelineRail}
+                ref={carouselRef}
+                style={{ x: shouldReduceMotion ? 0 : x }}
+              >
+                {experienceEntries.map((entry, index) => (
+                  <motion.li
+                    className={styles.timelineItem}
+                    key={`${entry.title}-${entry.company}`}
+                    initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
+                    animate={isInView || shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.3, delay: shouldReduceMotion ? 0 : index * 0.06, ease: "easeOut" }}
+                  >
+                    <div className={styles.timelineNodeContainer}>
+                      <p className={styles.timelineAxisDate}>{entry.duration}</p>
+                      <div className={styles.timelineAxisTrack}>
+                        <div className={styles.timelineAxisDot} />
+                        <div className={styles.timelineAxisLine} />
+                      </div>
+                    </div>
 
-                <p className={styles.timelineDescription}>{entry.description}</p>
-              </article>
-            </motion.li>
-          ))}
-        </motion.ol>
+                    <article className={styles.timelineCard}>
+                      <div className={styles.timelineTopRow}>
+                        <span className={styles.timelineIndex}>{String(index + 1).padStart(2, "0")}</span>
+                      </div>
+
+                      <div className={styles.timelineBody}>
+                        <img
+                          alt={`${entry.company} logo`}
+                          className={styles.timelineLogo}
+                          height={48}
+                          loading="lazy"
+                          src={entry.logoUrl}
+                          width={48}
+                        />
+                        <div className={styles.timelineCopy}>
+                          <h3 className={styles.timelineTitle}>{entry.title}</h3>
+                          <h4 className={styles.timelineCompany}>{entry.company}</h4>
+                        </div>
+                      </div>
+
+                      <p className={styles.timelineDescription}>{entry.description}</p>
+                    </article>
+                  </motion.li>
+                ))}
+              </motion.ol>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
