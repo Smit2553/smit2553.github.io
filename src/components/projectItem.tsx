@@ -27,9 +27,11 @@ export default function ProjectItem(props: ProjectItemProps) {
 
   return (
     <motion.article
-      className={styles.projectContainer}
+      layout={!shouldReduceMotion}
+      className={`${styles.projectContainer} ${props.isExpanded ? styles.projectContainerExpanded : ""}`}
       initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
       whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+      transition={{ layout: { duration: shouldReduceMotion ? 0 : 0.35, ease: "easeInOut" } }}
       viewport={{ amount: 0.25, once: true }}
     >
       <button
@@ -41,13 +43,17 @@ export default function ProjectItem(props: ProjectItemProps) {
         aria-describedby={props.techStack.length > 0 ? techId : undefined}
         onClick={() => props.onToggle(props.id)}
       >
-        <span className={styles.summaryMedia}>
+        <motion.span
+          layout={!shouldReduceMotion}
+          className={`${styles.summaryMedia} ${props.isExpanded ? styles.summaryMediaExpanded : ""}`}
+          transition={{ layout: { duration: shouldReduceMotion ? 0 : 0.35, ease: "easeInOut" } }}
+        >
           <img
             src={props.image}
             alt=""
-            className={styles.image}
+            className={`${styles.image} ${props.isExpanded ? styles.imageExpanded : ""}`}
           />
-          <span className={styles.overlay}>
+          <span className={`${styles.overlay} ${props.isExpanded ? styles.overlayExpanded : ""}`}>
             <span className={styles.overlayHeader}>
               <span id={titleId} className={styles.title} role="heading" aria-level={3}>
                 {props.title}
@@ -69,7 +75,7 @@ export default function ProjectItem(props: ProjectItemProps) {
               </span>
             )}
           </span>
-        </span>
+        </motion.span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -84,9 +90,14 @@ export default function ProjectItem(props: ProjectItemProps) {
             exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.25, ease: "easeInOut" }}
           >
-            <div className={styles.detailsInner}>
-              <p className={styles.description}>{props.description}</p>
-              <div className={styles.linksContainer}>
+            <motion.div
+              className={styles.detailsInner}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.2, delay: shouldReduceMotion ? 0 : 0.08, ease: "easeOut" }}
+            >
+              <motion.p className={styles.description}>{props.description}</motion.p>
+              <motion.div className={styles.linksContainer}>
                 {props.links?.github && (
                   <motion.a
                     href={props.links.github}
@@ -123,8 +134,8 @@ export default function ProjectItem(props: ProjectItemProps) {
                     />
                   </motion.a>
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
