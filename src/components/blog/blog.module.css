@@ -2,6 +2,10 @@
   padding: 2rem 1rem 4rem;
 }
 
+.section {
+  padding: 4rem 1rem 2rem;
+}
+
 .pageInner,
 .articleShell,
 .sectionInner {
@@ -39,6 +43,8 @@
 
 .sectionHeader {
   margin-bottom: 0;
+  align-items: center;
+  text-align: center;
 }
 
 .eyebrow {
@@ -145,7 +151,7 @@
   min-height: 100%;
   padding: 1.25rem;
   border: 1px solid rgba(118, 171, 174, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   color: #222831;
@@ -170,7 +176,7 @@
 .postCardCoverWrap,
 .articleCoverWrap {
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 16px;
   background: rgba(118, 171, 174, 0.08);
 }
 
@@ -326,7 +332,7 @@
   margin: 0 auto;
   padding: 1.5rem;
   border: 1px solid rgba(118, 171, 174, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -357,7 +363,7 @@
 .articleContent {
   padding: 1.25rem;
   border: 1px solid rgba(118, 171, 174, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -503,7 +509,7 @@
   gap: 0.75rem;
   padding: 1rem 1.15rem;
   border: 1px solid rgba(118, 171, 174, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   background-color: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }

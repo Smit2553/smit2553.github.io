@@ -68,7 +68,6 @@ type EducationEntry = {
   degree: string;
   institution: string;
   duration: string;
-  status: string;
 };
 
 const educationEntries: EducationEntry[] = [
@@ -76,20 +75,18 @@ const educationEntries: EducationEntry[] = [
     degree: "BS in Computer Science",
     institution: "Arizona State University",
     duration: "August 2023 - May 2026",
-    status: "Completed coursework in progress",
   },
   {
     degree: "PhD in Computer Science",
     institution: "Arizona State University",
     duration: "August 2026 - Present",
-    status: "Incoming / current research track",
   },
 ];
 
 type SectionHeaderProps = {
   eyebrow: string;
   title: string;
-  lead: string;
+  lead?: string;
   titleId: string;
 };
 
@@ -100,7 +97,7 @@ function SectionHeader({ eyebrow, lead, title, titleId }: SectionHeaderProps) {
       <h2 className={styles.sectionTitle} id={titleId}>
         {title}
       </h2>
-      <p className={styles.sectionLead}>{lead}</p>
+      {lead && <p className={styles.sectionLead}>{lead}</p>}
     </header>
   );
 }
@@ -113,7 +110,6 @@ export function EducationSection() {
           eyebrow="Academics"
           title="Education"
           titleId="education-title"
-          lead="Two focused milestones that frame the academic side of the work."
         />
 
         <div className={styles.educationGrid}>
@@ -129,8 +125,6 @@ export function EducationSection() {
                 </div>
                 <span className={styles.educationBadge}>{entry.duration}</span>
               </div>
-
-              <p className={styles.educationSummary}>{entry.status}</p>
             </article>
           ))}
         </div>
@@ -189,7 +183,6 @@ export function ExperienceTimelineSection() {
               eyebrow="Career"
               title="Experience"
               titleId="experience-title"
-              lead="A comprehensive timeline of my professional work and research."
             />
 
             <div className={styles.timelineWrapper}>

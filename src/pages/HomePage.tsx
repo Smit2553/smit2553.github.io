@@ -36,10 +36,10 @@ export default function HomePage() {
   return (
     <div>
       <div className={styles.container}>
-        <div>
-          <h2>Presenting,</h2>
+        <div className={styles.heroContent}>
+          <p className={styles.heroEyebrow}>Presenting,</p>
           <h1 className={styles.title}>Smit Devrukhkar</h1>
-          <h2>
+          <h2 className={styles.heroSubtitle}>
             <TypeAnimation
               sequence={[
                 "Technology Enthusiast",
@@ -54,90 +54,42 @@ export default function HomePage() {
               repeat={Infinity}
             />
           </h2>
-          <h2>Student at Arizona State University</h2>
-          <div className={styles.socialLinks}>
-            <motion.a
-              href="https://github.com/Smit2553"
-              target="_blank"
-              rel="noreferrer"
-              className={styles.iconLink}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <img
-                src="/icons/logo-github.svg"
-                alt="Github"
-                width={30}
-                height={30}
-                className={styles.icon}
-              />
-            </motion.a>
-
-            <motion.a
-              href="https://www.linkedin.com/in/smitsd/"
-              target="_blank"
-              rel="noreferrer"
-              className={styles.iconLink}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <img
-                src="/icons/logo-linkedin.svg"
-                alt="LinkedIn"
-                width={30}
-                height={30}
-                className={styles.icon}
-              />
-            </motion.a>
-          </div>
+          <p className={styles.heroDescription}>Student at Arizona State University</p>
           <div className={styles.navLinks}>
-            <motion.a
-              href="#projects"
-              className={styles.link}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
+            <motion.a href="#projects" className={styles.navPill} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               Projects
             </motion.a>
-            <motion.a
-              href="#education"
-              className={styles.link}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
+            <motion.a href="#education" className={styles.navPill} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               Education
             </motion.a>
-            <motion.a
-              href="#experience"
-              className={styles.link}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
+            <motion.a href="#experience" className={styles.navPill} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               Experience
             </motion.a>
-            <Link className={styles.link} to="/blog">
+            <Link className={styles.navPill} to="/blog">
               Blog
             </Link>
           </div>
-          <div className={styles.emailContainer}>
-            <motion.a
-              href="mailto:smitdev3@gmail.com"
-              className={styles.emailLink}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <MdEmail size={20} className={styles.emailIcon} />
-              smitdev3@gmail.com
-            </motion.a>
-            <motion.a
-              href="mailto:ssdevruk@asu.edu"
-              className={styles.emailLink}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <MdEmail size={20} className={styles.emailIcon} />
-              ssdevruk@asu.edu
-            </motion.a>
+          
+          <div className={styles.actionRow}>
+            <div className={styles.socialLinks}>
+              <motion.a href="https://github.com/Smit2553" target="_blank" rel="noreferrer" className={styles.iconLink} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <img src="/icons/logo-github.svg" alt="Github" width={28} height={28} className={styles.icon} />
+              </motion.a>
+              <motion.a href="https://www.linkedin.com/in/smitsd/" target="_blank" rel="noreferrer" className={styles.iconLink} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <img src="/icons/logo-linkedin.svg" alt="LinkedIn" width={28} height={28} className={styles.icon} />
+              </motion.a>
+            </div>
+            
+            <div className={styles.emailContainer}>
+              <motion.a href="mailto:smitdev3@gmail.com" className={styles.emailLink} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <MdEmail size={18} className={styles.emailIcon} />
+                smitdev3@gmail.com
+              </motion.a>
+              <motion.a href="mailto:ssdevruk@asu.edu" className={styles.emailLink} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <MdEmail size={18} className={styles.emailIcon} />
+                ssdevruk@asu.edu
+              </motion.a>
+            </div>
           </div>
         </div>
 

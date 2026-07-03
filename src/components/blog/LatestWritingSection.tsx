@@ -54,10 +54,6 @@ export default function LatestWritingSection() {
           <h1 className={styles.sectionTitle} id="writing">
             Latest Writing
           </h1>
-          <p className={styles.sectionLead}>
-            Short essays, technical notes, and whatever I am thinking through
-            next.
-          </p>
         </div>
 
         {state.status === "loading" && (
