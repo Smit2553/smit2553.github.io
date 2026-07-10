@@ -325,6 +325,17 @@
   color: #8b4c4c;
 }
 
+.badgeFlagged {
+  background-color: rgba(214, 158, 46, 0.16);
+  color: #8b641d;
+}
+
+.flagSummary {
+  margin: 0;
+  color: #8b641d;
+  line-height: 1.7;
+}
+
 .slug {
   padding: 0.2rem 0.45rem;
   border-radius: 6px;

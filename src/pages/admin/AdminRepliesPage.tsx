@@ -177,6 +177,7 @@ export default function AdminRepliesPage() {
   const pendingCount = state.status === "ready" ? state.replies.filter((reply) => reply.status === "pending").length : 0;
   const approvedCount = state.status === "ready" ? state.replies.filter((reply) => reply.status === "approved").length : 0;
   const rejectedCount = state.status === "ready" ? state.replies.filter((reply) => reply.status === "rejected").length : 0;
+  const flaggedCount = state.status === "ready" ? state.replies.filter((reply) => reply.moderation.flagged).length : 0;
 
   return (
     <AdminShell
@@ -251,7 +252,7 @@ export default function AdminRepliesPage() {
         {state.status === "ready" && state.replies.length > 0 ? (
           <>
             <p className={styles.listCount}>
-              {pendingCount} pending, {approvedCount} approved, {rejectedCount} rejected
+              {pendingCount} pending, {approvedCount} approved, {rejectedCount} rejected, {flaggedCount} flagged
             </p>
 
             <div className={styles.list}>
@@ -260,6 +261,7 @@ export default function AdminRepliesPage() {
                 const isDeleting = deletingReplyId === reply.id;
                 const statusLabel = getReplyStatusLabel(reply.status);
                 const statusClass = getReplyStatusClass(reply.status);
+                const moderationReasonLabel = reply.moderation.reasons.join(" • ");
 
                 return (
                   <article className={styles.postCard} key={reply.id}>
@@ -267,6 +269,7 @@ export default function AdminRepliesPage() {
                       <div className={styles.postCopy}>
                         <div className={styles.postMeta}>
                           <span className={`${styles.badge} ${statusClass}`}>{statusLabel}</span>
+                          {reply.moderation.flagged ? <span className={`${styles.badge} ${styles.badgeFlagged}`}>Flagged</span> : null}
                         </div>
 
                         <h2 className={styles.postTitle}>{reply.authorName}</h2>
@@ -283,6 +286,12 @@ export default function AdminRepliesPage() {
                         <span>Updated {formatAdminTimestamp(reply.updatedAt)}</span>
                       </div>
                     </div>
+
+                    {reply.moderation.flagged ? (
+                      <p className={styles.flagSummary}>
+                        Auto-flagged for {moderationReasonLabel}.
+                      </p>
+                    ) : null}
 
                     <p className={styles.replyBody}>{reply.body}</p>
 

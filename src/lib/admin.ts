@@ -48,6 +48,10 @@ export interface AdminReply {
   authorEmail: string | null;
   body: string;
   status: AdminReplyStatus;
+  moderation: {
+    flagged: boolean;
+    reasons: string[];
+  };
   createdAt: string;
   updatedAt: string;
 }

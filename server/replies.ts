@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { getReplySpamBlockReason, moderateReply, type ReplyModeration } from "./reply-moderation";
 import {
   createReplyLike,
   deleteReplyLike,
@@ -54,6 +55,7 @@ export interface AdminReply {
   authorEmail: string | null;
   body: string;
   status: ReplyStatus;
+  moderation: ReplyModeration;
   createdAt: string;
   updatedAt: string;
 }
@@ -211,6 +213,9 @@ function toPublicReply(row: ReplyRow, likeCount = 0): PublicReply {
 }
 
 function toAdminReply(row: ReplyWithPostRow): AdminReply {
+  const authorName = normalizeText(row.author_name);
+  const authorEmail = normalizeNullableText(row.author_email);
+
   return {
     id: row.id,
     post: {
@@ -224,10 +229,11 @@ function toAdminReply(row: ReplyWithPostRow): AdminReply {
       updatedAt: row.post_updated_at,
     },
     parentReplyId: row.parent_reply_id,
-    authorName: normalizeText(row.author_name),
-    authorEmail: normalizeNullableText(row.author_email),
+    authorName,
+    authorEmail,
     body: row.body,
     status: toReplyStatus(row.status),
+    moderation: moderateReply(authorName, authorEmail, row.body),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -270,6 +276,12 @@ export async function createPublishedBlogReplyBySlug(slug: string, body: unknown
   const authorEmail = readOptionalTextField(payload.authorEmail ?? payload.author_email, "Author email");
   const parentReplyIdValue = payload.parentReplyId ?? payload.parent_reply_id;
   const parentReplyId = readOptionalTextField(parentReplyIdValue, "Parent reply id");
+  const moderation = moderateReply(authorName, authorEmail, replyBody);
+  const spamBlockReason = getReplySpamBlockReason(moderation, replyBody);
+
+  if (spamBlockReason !== null) {
+    throw new ReplyError(400, `${spamBlockReason} If this was a mistake, try rewriting the reply without promotional wording or link-heavy text.`);
+  }
 
   if (parentReplyId !== null) {
     const parentReply = await getReplyById(parentReplyId);
@@ -351,7 +363,9 @@ export async function likePublishedBlogReplyBySlug(slug: string, replyId: string
 }
 
 export async function listAdminReplies(): Promise<AdminReply[]> {
-  return (await getAdminReplyRows()).map(toAdminReply);
+  return (await getAdminReplyRows())
+    .map(toAdminReply)
+    .sort((left, right) => Number(right.moderation.flagged) - Number(left.moderation.flagged));
 }
 
 export async function updateAdminReplyStatus(id: string, body: unknown): Promise<void> {
