@@ -34,6 +34,7 @@ type BlogReplySubmission = {
   authorName: string;
   body: string;
   parentReplyId?: string | null;
+  website?: string;
 };
 
 type BlogListResponse = {
@@ -54,14 +55,11 @@ type BlogReplySubmissionResponse = {
   ok: true;
 };
 
-const visitorKeyStorageKey = "blog:visitor-key";
-const visitorKeyCookieName = "blog-visitor-key";
 const likedPostStorageKey = "blog:liked-post-ids";
 const likedPostCookieName = "blog-liked-post-ids";
 const likedReplyStorageKey = "blog:liked-reply-ids";
 const likedReplyCookieName = "blog-liked-reply-ids";
 const cookieMaxAgeSeconds = 60 * 60 * 24 * 365;
-const visitorKeyPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class BlogApiError extends Error {
   status: number;
@@ -139,16 +137,6 @@ export function getBlogErrorMessage(error: unknown): string {
   return "Unable to load blog content.";
 }
 
-function createVisitorKey(): string {
-  const visitorKey = globalThis.crypto?.randomUUID?.();
-
-  if (!visitorKey) {
-    throw new Error("Unable to generate a visitor key.");
-  }
-
-  return visitorKey;
-}
-
 function readCookieValue(cookieName: string): string | null {
   if (typeof document === "undefined") {
     return null;
@@ -221,28 +209,6 @@ function writePersistedValue(storageKey: string, cookieName: string, value: stri
   }
 
   writeCookieValue(cookieName, value);
-}
-
-export function getBlogVisitorKey(): string {
-  if (typeof window === "undefined") {
-    return createVisitorKey();
-  }
-
-  const storedKey = readPersistedValue(visitorKeyStorageKey, visitorKeyCookieName);
-
-  if (storedKey) {
-    const normalizedKey = storedKey.trim().toLowerCase();
-
-    if (visitorKeyPattern.test(normalizedKey)) {
-      return normalizedKey;
-    }
-  }
-
-  const visitorKey = createVisitorKey();
-
-  writePersistedValue(visitorKeyStorageKey, visitorKeyCookieName, visitorKey);
-
-  return visitorKey;
 }
 
 function readPersistedIdList(storageKey: string, cookieName: string): string[] {
@@ -413,12 +379,11 @@ export async function submitBlogReply(slug: string, reply: BlogReplySubmission):
   );
 }
 
-async function requestBlogLike(path: string, visitorKey: string): Promise<BlogLikeResult> {
+async function requestBlogLike(path: string): Promise<BlogLikeResult> {
   const response = await requestJson<BlogLikeResponse>(
     path,
     {
       method: "POST",
-      body: JSON.stringify({ visitorKey }),
     },
     "Unable to like blog post.",
   );
@@ -428,22 +393,19 @@ async function requestBlogLike(path: string, visitorKey: string): Promise<BlogLi
 
 export async function likeBlogPost(
   slug: string,
-  visitorKey = getBlogVisitorKey(),
 ): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/likes`, visitorKey);
+  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/likes`);
 }
 
 export async function likeBlogPostById(
   postId: string,
-  visitorKey = getBlogVisitorKey(),
 ): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/id/${encodeURIComponent(postId)}/likes`, visitorKey);
+  return requestBlogLike(`/api/posts/id/${encodeURIComponent(postId)}/likes`);
 }
 
 export async function likeBlogReply(
   slug: string,
   replyId: string,
-  visitorKey = getBlogVisitorKey(),
 ): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/replies/${encodeURIComponent(replyId)}/likes`, visitorKey);
+  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/replies/${encodeURIComponent(replyId)}/likes`);
 }

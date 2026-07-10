@@ -47,10 +47,12 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
   const sectionId = useId();
   const authorNameInputId = `${sectionId}-author-name`;
   const replyInputId = `${sectionId}-reply-body`;
+  const websiteInputId = `${sectionId}-website`;
   const [repliesState, setRepliesState] = useState<RepliesState>({ status: "loading" });
   const [submissionState, setSubmissionState] = useState<SubmissionState>({ status: "idle" });
   const [authorName, setAuthorName] = useState("");
   const [body, setBody] = useState("");
+  const [website, setWebsite] = useState("");
   const [replyTarget, setReplyTarget] = useState<BlogReply | null>(null);
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
     setSubmissionState({ status: "idle" });
     setAuthorName("");
     setBody("");
+    setWebsite("");
     setReplyTarget(null);
 
     void (async () => {
@@ -95,6 +98,11 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
     clearSubmissionFeedback();
   }
 
+  function handleWebsiteChange(event: ChangeEvent<HTMLInputElement>): void {
+    setWebsite(event.target.value);
+    clearSubmissionFeedback();
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -117,10 +125,12 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
         authorName: normalizedAuthorName,
         body: normalizedBody,
         parentReplyId: replyTarget?.id ?? null,
+        website,
       });
 
       setAuthorName("");
       setBody("");
+      setWebsite("");
       setReplyTarget(null);
       setSubmissionState({
         status: "success",
@@ -175,6 +185,22 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
               {submissionState.message}
             </div>
           )}
+
+          <div className={styles.field}>
+            <label className={styles.honeypotLabel} htmlFor={websiteInputId}>
+              Website
+            </label>
+            <input
+              autoComplete="off"
+              className={styles.honeypotInput}
+              id={websiteInputId}
+              name="website"
+              tabIndex={-1}
+              type="text"
+              value={website}
+              onChange={handleWebsiteChange}
+            />
+          </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor={authorNameInputId}>

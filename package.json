@@ -6,9 +6,9 @@
     "node": "22"
   },
   "scripts": {
-    "dev": "BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 concurrently \"npm:dev:client\" \"npm:dev:server\"",
+    "dev": "BLOG_APP_ENV=development BLOG_DB_SCHEMA=blog_dev BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 concurrently \"npm:dev:client\" \"npm:dev:server\"",
     "dev:client": "vite",
-    "dev:server": "tsx watch server/index.ts",
+    "dev:server": "BLOG_APP_ENV=development BLOG_DB_SCHEMA=blog_dev BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 tsx watch server/index.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "tsc --noEmit && vite build",
     "build:server": "tsc -p tsconfig.server.json",

@@ -395,6 +395,15 @@
   gap: 0.5rem;
 }
 
+.honeypotLabel,
+.honeypotInput {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .label {
   color: #3d6568;
   font-size: 0.78rem;

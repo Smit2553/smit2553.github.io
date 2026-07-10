@@ -6,6 +6,8 @@ import { blogDbSchema, clientDistPath, clientIndexPath } from "./config";
 
 export const app = express();
 
+app.set("trust proxy", 1);
+
 function sendClientIndex(_req: Request, res: Response, next: NextFunction): void {
   res.sendFile(clientIndexPath, (error) => {
     if (error) {

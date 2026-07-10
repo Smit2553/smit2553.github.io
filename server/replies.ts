@@ -80,13 +80,13 @@ interface ReplyPayload {
   parent_reply_id?: unknown;
   visitorKey?: unknown;
   visitor_key?: unknown;
+  website?: unknown;
+  website_url?: unknown;
 }
 
 interface ReplyStatusPayload {
   status?: unknown;
 }
-
-const visitorKeyPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -174,24 +174,6 @@ function readReplyStatus(value: unknown): ReplyStatus {
   throw new ReplyError(400, "Status must be approved or rejected.");
 }
 
-function readVisitorKey(value: unknown): string {
-  if (typeof value !== "string") {
-    throw new ReplyError(400, "Visitor key is required.");
-  }
-
-  const normalized = value.trim().toLowerCase();
-
-  if (normalized.length === 0) {
-    throw new ReplyError(400, "Visitor key is required.");
-  }
-
-  if (!visitorKeyPattern.test(normalized)) {
-    throw new ReplyError(400, "Visitor key must be a UUID.");
-  }
-
-  return normalized;
-}
-
 function toReplyStatus(value: string): ReplyStatus {
   if (value === "pending" || value === "approved" || value === "rejected") {
     return value;
@@ -271,6 +253,13 @@ export async function listPublishedBlogRepliesBySlug(slug: string): Promise<Publ
 export async function createPublishedBlogReplyBySlug(slug: string, body: unknown): Promise<PublicReply> {
   const post = await getPublishedReplyPost(slug);
   const payload = requireObjectBody(body);
+
+  const honeypotValue = payload.website ?? payload.website_url;
+
+  if (typeof honeypotValue === "string" && honeypotValue.trim().length > 0) {
+    throw new ReplyError(400, "Unable to submit reply.");
+  }
+
   const authorName = readRequiredTextField(payload.authorName ?? payload.author_name, "Author name");
   const replyBody = readRequiredPlainTextField(payload.body, "Reply body");
   const authorEmail = readOptionalTextField(payload.authorEmail ?? payload.author_email, "Author email");
@@ -327,11 +316,9 @@ export async function createPublishedBlogReplyBySlug(slug: string, body: unknown
   }, 0);
 }
 
-export async function likePublishedBlogReplyBySlug(slug: string, replyId: string, body: unknown): Promise<PublicReplyLikeResult> {
+export async function likePublishedBlogReplyBySlug(slug: string, replyId: string, visitorKey: string): Promise<PublicReplyLikeResult> {
   const post = await getPublishedReplyPost(slug);
   const normalizedReplyId = normalizeReplyId(replyId);
-  const payload = requireObjectBody(body);
-  const visitorKey = readVisitorKey(payload.visitorKey ?? payload.visitor_key);
   const reply = await getReplyById(normalizedReplyId);
 
   if (!reply || reply.post_id !== post.id || reply.status !== "approved") {
