@@ -29,7 +29,23 @@ Live site: https://smit-dev.codestacx.com
 - Run built app: `npm start`
 - Coolify/Nixpacks should use `npm start`
 - The server listens for `SIGTERM`/`SIGINT`, stops accepting traffic, drains HTTP requests, and closes the Postgres pool before exit. Give it at least 10 seconds of shutdown grace in Coolify.
-- Configure `/api/health` as the cheap liveness check and `/api/ready` as the database-backed readiness check.
+
+## Coolify health checks
+
+Configure the application health check in Coolify with:
+
+- Protocol: `HTTP`
+- Port: `3001` (or the value of `PORT` if you override it)
+- Path: `/api/health`
+- Expected status: `200`
+- Interval: `30s`
+- Timeout: `5s`
+- Retries: `3`
+- Start period: at least `30s`; use a longer value if the database migration/release job runs as part of deployment
+
+`/api/health` is a cheap liveness check and does not require Postgres, so it is appropriate for restarting an unresponsive container. Use `/api/ready` for a database-backed readiness check or external monitoring: it returns `200` with `{ "ok": true }` only when the application schema and storage are available, and fails when Postgres is unavailable. Run `npm run db:migrate` as a pre-deploy/release task before relying on readiness.
+
+The app listens on `PORT` (default `3001`) and should remain private behind Coolify's proxy. For a local check, run `curl -i http://127.0.0.1:3001/api/health` and expect `HTTP/1.1 200` with `{ "ok": true }`.
 
 ## Production configuration
 
