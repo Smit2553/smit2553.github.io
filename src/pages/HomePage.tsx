@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { TypeAnimation } from "react-type-animation";
 import { Link } from "react-router-dom";
 import { FaFileAudio, FaPython, FaReact } from "react-icons/fa";
@@ -29,9 +29,9 @@ import styles from "../App.module.css";
 export default function HomePage() {
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
 
-  function handleProjectToggle(projectId: string): void {
+  const handleProjectToggle = useCallback((projectId: string): void => {
     setOpenProjectId((current) => (current === projectId ? null : projectId));
-  }
+  }, []);
 
   return (
     <div>
@@ -94,12 +94,15 @@ export default function HomePage() {
         </div>
 
         <div className={styles.imageContainer}>
-          <img
-            src="/profilepicture.jpg"
-            alt="Smit Devrukhkar"
-            width={400}
-            height={400}
-          />
+          <picture>
+            <source srcSet="/profilepicture.avif" type="image/avif" />
+            <img
+              src="/profilepicture.jpg"
+              alt="Smit Devrukhkar"
+              width={400}
+              height={400}
+            />
+          </picture>
         </div>
       </div>
 
@@ -119,6 +122,9 @@ export default function HomePage() {
             live: "https://devpost.com/software/master-vault",
           }}
           image="/princeton2025.png"
+          optimizedImage="/princeton2025.avif"
+          imageHeight={1080}
+          imageWidth={1920}
           techStack={[
             "Google Gemini",
             "OpenAI Whisper",
@@ -147,6 +153,9 @@ export default function HomePage() {
             live: "https://offscript.codestacx.com/",
           }}
           image="/offscript.png"
+          optimizedImage="/offscript.avif"
+          imageHeight={2000}
+          imageWidth={3000}
           techStack={["Elevenlabs", "Google Gemini", "FastAPI", "Vapi"]}
           icons={[
             <SiElevenlabs size={30} />,
@@ -166,6 +175,9 @@ export default function HomePage() {
             live: "https://board-game-cafe-website.vercel.app/",
           }}
           image="/sipnplaypicture.png"
+          optimizedImage="/sipnplaypicture.avif"
+          imageHeight={640}
+          imageWidth={1280}
           techStack={["React.js", "Three.js", "Tailwind CSS", "Vite"]}
           icons={[
             <FaReact size={30} />,
@@ -201,6 +213,9 @@ export default function HomePage() {
             <SiFastapi size={30} />,
           ]}
           image="/HealthSync.jpg"
+          optimizedImage="/HealthSync.avif"
+          imageHeight={540}
+          imageWidth={960}
           isExpanded={openProjectId === "healthsync"}
           onToggle={handleProjectToggle}
         />
@@ -217,6 +232,9 @@ export default function HomePage() {
             <SiFlask size={30} />,
           ]}
           image="/fiberimage.jpg"
+          optimizedImage="/fiberimage.avif"
+          imageHeight={1362}
+          imageWidth={2304}
           isExpanded={openProjectId === "fiber"}
           onToggle={handleProjectToggle}
         />
@@ -226,6 +244,9 @@ export default function HomePage() {
           description="My personal website built to showcase my projects and my resume."
           links={{ github: "https://github.com/Smit2553/smit2553.github.io" }}
           image="/personalwebsitepicture.jpg"
+          optimizedImage="/personalwebsitepicture.avif"
+          imageHeight={1440}
+          imageWidth={2560}
           techStack={["Vite", "React", "TypeScript"]}
           icons={[
             <TbBrandVite size={30} />,

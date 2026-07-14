@@ -35,3 +35,9 @@ textarea {
 img {
   display: block;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

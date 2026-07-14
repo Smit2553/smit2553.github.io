@@ -6,6 +6,7 @@ import {
   adminSessionTtlMs,
   adminUsername,
   productionMode,
+  publicOrigin,
 } from "./config";
 import {
   createSession,
@@ -14,7 +15,7 @@ import {
   getAdminUserByUsername,
   getSessionByTokenHash,
   revokeSessionById,
-  revokeSessionsByAdminUserId,
+  rotateAdminUserCredentials,
   touchSession,
   type AdminUserRow,
   type SessionRow,
@@ -48,6 +49,22 @@ export interface AdminLoginResult {
   token: string;
 }
 
+const passwordSaltHexLength = 32;
+const passwordHashHexLength = 128;
+
+function derivePasswordKey(password: string, salt: Buffer, length: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, length, (error, derivedKey) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(derivedKey);
+    });
+  });
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -56,9 +73,9 @@ function addMilliseconds(iso: string, amount: number): string {
   return new Date(Date.parse(iso) + amount).toISOString();
 }
 
-function createPasswordRecord(password: string): { saltHex: string; hashHex: string } {
+async function createPasswordRecord(password: string): Promise<{ saltHex: string; hashHex: string }> {
   const salt = crypto.randomBytes(16);
-  const hash = crypto.scryptSync(password, salt, 64);
+  const hash = await derivePasswordKey(password, salt, 64);
 
   return {
     saltHex: salt.toString("hex"),
@@ -66,12 +83,56 @@ function createPasswordRecord(password: string): { saltHex: string; hashHex: str
   };
 }
 
-function verifyPassword(password: string, saltHex: string, expectedHashHex: string): boolean {
+async function verifyPassword(password: string, saltHex: string, expectedHashHex: string): Promise<boolean> {
+  if (saltHex.length !== passwordSaltHexLength
+    || expectedHashHex.length !== passwordHashHexLength
+    || !/^[0-9a-f]+$/i.test(saltHex)
+    || !/^[0-9a-f]+$/i.test(expectedHashHex)) {
+    return false;
+  }
+
   const salt = Buffer.from(saltHex, "hex");
   const expected = Buffer.from(expectedHashHex, "hex");
-  const actual = Buffer.from(crypto.scryptSync(password, salt, expected.length));
+  const actual = await derivePasswordKey(password, salt, expected.length);
 
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function expectedRequestOrigin(request: Request): string | null {
+  if (publicOrigin) {
+    return publicOrigin;
+  }
+
+  const host = request.get("host");
+
+  return host ? `${request.protocol}://${host}` : null;
+}
+
+function headerOrigin(headerValue: string): string | null {
+  try {
+    return new URL(headerValue).origin;
+  } catch {
+    return null;
+  }
+}
+
+export function requireAdminSameOrigin(request: Request, response: Response, next: NextFunction): void {
+  if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") {
+    next();
+    return;
+  }
+
+  const expectedOrigin = expectedRequestOrigin(request);
+  const originHeader = request.get("origin");
+  const refererHeader = request.get("referer");
+  const suppliedOrigin = originHeader ? headerOrigin(originHeader) : refererHeader ? headerOrigin(refererHeader) : null;
+
+  if (!expectedOrigin || suppliedOrigin !== expectedOrigin) {
+    response.status(403).json({ error: "Request origin is not allowed." });
+    return;
+  }
+
+  next();
 }
 
 function createSessionToken(): string {
@@ -158,7 +219,7 @@ export async function initializeAdminAuth(): Promise<AdminUserRow> {
   const existing = await getAdminUserById(PRIMARY_ADMIN_USER_ID);
 
   if (!existing) {
-    const { saltHex, hashHex } = createPasswordRecord(adminPassword);
+    const { saltHex, hashHex } = await createPasswordRecord(adminPassword);
 
     await upsertAdminUser({
       id: PRIMARY_ADMIN_USER_ID,
@@ -175,15 +236,15 @@ export async function initializeAdminAuth(): Promise<AdminUserRow> {
   }
 
   const passwordMatches = existing.disabled_at === null && existing.username === adminUsername
-    && verifyPassword(adminPassword, existing.password_salt, existing.password_hash);
+    && await verifyPassword(adminPassword, existing.password_salt, existing.password_hash);
 
   if (passwordMatches) {
     return existing;
   }
 
-  const { saltHex, hashHex } = createPasswordRecord(adminPassword);
+  const { saltHex, hashHex } = await createPasswordRecord(adminPassword);
 
-  await upsertAdminUser({
+  await rotateAdminUserCredentials({
     id: PRIMARY_ADMIN_USER_ID,
     username: adminUsername,
     passwordHash: hashHex,
@@ -192,8 +253,7 @@ export async function initializeAdminAuth(): Promise<AdminUserRow> {
     updatedAt: now,
     lastLoginAt: existing.last_login_at,
     disabledAt: null,
-  });
-  await revokeSessionsByAdminUserId(PRIMARY_ADMIN_USER_ID, now);
+  }, now);
 
   return (await getAdminUserById(PRIMARY_ADMIN_USER_ID)) as AdminUserRow;
 }
@@ -214,7 +274,7 @@ export async function loginAdmin(username: string, password: string): Promise<Ad
     return null;
   }
 
-  if (!verifyPassword(password, user.password_salt, user.password_hash)) {
+  if (!await verifyPassword(password, user.password_salt, user.password_hash)) {
     return null;
   }
 

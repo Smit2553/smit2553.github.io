@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import {
   AdminPostError,
   createAdminPost,
@@ -11,24 +11,24 @@ import { readRouteParam } from "./params";
 
 const adminPostsRouter = Router();
 
-function respondWithAdminPostError(response: Response, error: unknown): void {
+function respondWithAdminPostError(response: Response, error: unknown, next: NextFunction): void {
   if (error instanceof AdminPostError) {
     response.status(error.status).json({ error: error.message });
     return;
   }
 
-  response.status(500).json({ error: "Unable to process post." });
+  next(error);
 }
 
-adminPostsRouter.get("/", async (_request: Request, response: Response) => {
+adminPostsRouter.get("/", async (_request: Request, response: Response, next: NextFunction) => {
   try {
     response.json({ posts: await listAdminPosts() });
   } catch (error) {
-    respondWithAdminPostError(response, error);
+    respondWithAdminPostError(response, error, next);
   }
 });
 
-adminPostsRouter.get("/:id", async (request: Request, response: Response) => {
+adminPostsRouter.get("/:id", async (request: Request, response: Response, next: NextFunction) => {
   try {
     const post = await readAdminPostById(readRouteParam(request.params.id));
 
@@ -39,34 +39,34 @@ adminPostsRouter.get("/:id", async (request: Request, response: Response) => {
 
     response.json({ post });
   } catch (error) {
-    respondWithAdminPostError(response, error);
+    respondWithAdminPostError(response, error, next);
   }
 });
 
-adminPostsRouter.post("/", async (request: Request, response: Response) => {
+adminPostsRouter.post("/", async (request: Request, response: Response, next: NextFunction) => {
   try {
     await createAdminPost(request.body);
     response.json({ ok: true });
   } catch (error) {
-    respondWithAdminPostError(response, error);
+    respondWithAdminPostError(response, error, next);
   }
 });
 
-adminPostsRouter.patch("/:id", async (request: Request, response: Response) => {
+adminPostsRouter.patch("/:id", async (request: Request, response: Response, next: NextFunction) => {
   try {
     await updateAdminPost(readRouteParam(request.params.id), request.body);
     response.json({ ok: true });
   } catch (error) {
-    respondWithAdminPostError(response, error);
+    respondWithAdminPostError(response, error, next);
   }
 });
 
-adminPostsRouter.delete("/:id", async (request: Request, response: Response) => {
+adminPostsRouter.delete("/:id", async (request: Request, response: Response, next: NextFunction) => {
   try {
     await deleteAdminPost(readRouteParam(request.params.id));
     response.json({ ok: true });
   } catch (error) {
-    respondWithAdminPostError(response, error);
+    respondWithAdminPostError(response, error, next);
   }
 });
 

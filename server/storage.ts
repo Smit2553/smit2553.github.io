@@ -1,5 +1,6 @@
 import postgres, { type Sql } from "postgres";
-import { blogDbSchema, databaseUrl } from "./config";
+import { blogDbSchema, databaseUrl, productionMode } from "./config";
+import { databaseConnectionOptions, validateMigrationState, validateRequiredConstraints, validateRequiredSchema } from "./database-runtime";
 
 type UnsafeParameters = NonNullable<Parameters<Sql["unsafe"]>[1]>;
 
@@ -158,25 +159,6 @@ function requireSchemaName(): string {
   return blogDbSchema;
 }
 
-function shouldRequireSsl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    const sslMode = parsed.searchParams.get("sslmode")?.toLowerCase();
-
-    if (sslMode === "disable") {
-      return false;
-    }
-
-    if (sslMode === "require") {
-      return true;
-    }
-
-    return parsed.hostname.includes("supabase");
-  } catch {
-    return false;
-  }
-}
-
 function tableName(name: string): string {
   return `"${requireSchemaName()}"."${name}"`;
 }
@@ -185,12 +167,7 @@ function getSql(): Sql {
   if (!sqlClient) {
     const url = requireDatabaseUrl();
 
-    sqlClient = postgres(url, {
-      max: 10,
-      connect_timeout: 10,
-      idle_timeout: 20,
-      ssl: shouldRequireSsl(url) ? "require" : undefined,
-    });
+    sqlClient = postgres(url, databaseConnectionOptions(url, productionMode));
   }
 
   return sqlClient;
@@ -211,6 +188,16 @@ async function run(query: string, params: UnsafeParameters = []): Promise<void> 
 }
 
 export async function initializeStorage(): Promise<void> {
+  await checkStorageReadiness();
+  await validateRequiredSchema(getSql(), blogDbSchema);
+  await validateRequiredConstraints(getSql(), blogDbSchema);
+
+  if (productionMode) {
+    await validateMigrationState(getSql(), blogDbSchema);
+  }
+}
+
+export async function checkStorageReadiness(): Promise<void> {
   await getSql()`select 1`;
 }
 
@@ -276,6 +263,44 @@ export function upsertAdminUser(seed: AdminUserSeed): Promise<void> {
       seed.disabledAt,
     ] as const,
   );
+}
+
+export async function rotateAdminUserCredentials(seed: AdminUserSeed, revokedAt: string): Promise<void> {
+  await getSql().begin(async (transaction) => {
+    await transaction.unsafe(
+      `INSERT INTO ${tableName("admin_users")} (
+        id,
+        username,
+        password_hash,
+        password_salt,
+        created_at,
+        updated_at,
+        last_login_at,
+        disabled_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT(id) DO UPDATE SET
+        username = excluded.username,
+        password_hash = excluded.password_hash,
+        password_salt = excluded.password_salt,
+        updated_at = excluded.updated_at,
+        last_login_at = excluded.last_login_at,
+        disabled_at = excluded.disabled_at`,
+      [
+        seed.id,
+        seed.username,
+        seed.passwordHash,
+        seed.passwordSalt,
+        seed.createdAt,
+        seed.updatedAt,
+        seed.lastLoginAt,
+        seed.disabledAt,
+      ] as const,
+    );
+    await transaction.unsafe(
+      `UPDATE ${tableName("sessions")} SET revoked_at = $1 WHERE admin_user_id = $2 AND revoked_at IS NULL`,
+      [revokedAt, seed.id],
+    );
+  });
 }
 
 export function updateAdminUserLoginTime(adminUserId: string, lastLoginAt: string): Promise<void> {
@@ -502,7 +527,8 @@ export function getRepliesByPostId(postId: string): Promise<ReplyRow[]> {
       updated_at
     FROM ${tableName("replies")}
     WHERE post_id = $1
-    ORDER BY created_at ASC, id ASC`,
+    ORDER BY created_at ASC, id ASC
+    LIMIT 500`,
     [postId],
   );
 }
@@ -521,7 +547,8 @@ export function getRepliesByPostIdAndStatus(postId: string, status: string): Pro
       updated_at
     FROM ${tableName("replies")}
     WHERE post_id = $1 AND status = $2
-    ORDER BY created_at ASC, id ASC`,
+    ORDER BY created_at ASC, id ASC
+    LIMIT 500`,
     [postId, status],
   );
 }
@@ -552,7 +579,8 @@ export function getAdminReplies(): Promise<ReplyWithPostRow[]> {
       WHEN 'approved' THEN 1
       WHEN 'rejected' THEN 2
       ELSE 3
-    END, replies.created_at DESC, replies.id DESC`,
+    END, replies.created_at DESC, replies.id DESC
+    LIMIT 500`,
   );
 }
 
@@ -604,7 +632,8 @@ export function getAdminPosts(): Promise<AdminPostRow[]> {
       created_at,
       updated_at
     FROM ${tableName("posts")}
-    ORDER BY updated_at DESC, created_at DESC, id DESC`);
+    ORDER BY updated_at DESC, created_at DESC, id DESC
+    LIMIT 500`);
 }
 
 export function getAdminPostById(id: string): Promise<AdminPostRow | undefined> {

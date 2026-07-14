@@ -53,6 +53,12 @@
   transition: transform 0.35s ease;
 }
 
+.imagePicture {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
 .overlay {
   position: absolute;
   inset: 0;

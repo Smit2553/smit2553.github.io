@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import PageMetadata, { MetadataProvider } from "./components/PageMetadata";
 import HomePage from "./pages/HomePage";
+import NotFoundPage from "./pages/NotFoundPage";
 import styles from "./App.module.css";
 import { fetchSiteConfig, type SiteConfig } from "./lib/site";
 
@@ -10,6 +12,68 @@ const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
 const AdminPostFormPage = lazy(() => import("./pages/admin/AdminPostFormPage"));
 const AdminPostsPage = lazy(() => import("./pages/admin/AdminPostsPage"));
 const AdminRepliesPage = lazy(() => import("./pages/admin/AdminRepliesPage"));
+
+function RouteMetadata() {
+  const { pathname } = useLocation();
+
+  if (/^\/blog\/[^/]+\/?$/.test(pathname)) {
+    return null;
+  }
+
+  if (pathname === "/") {
+    return (
+      <PageMetadata
+        canonicalPath="/"
+        description="Portfolio of Smit Devrukhkar, a computer science researcher and software engineer at Arizona State University."
+        title="Smit Devrukhkar | Researcher & Software Engineer"
+      />
+    );
+  }
+
+  if (pathname === "/blog" || pathname === "/blog/") {
+    return (
+      <PageMetadata
+        canonicalPath="/blog"
+        description="Essays, project notes, and technical writing from Smit Devrukhkar."
+        title="Writing | Smit Devrukhkar"
+      />
+    );
+  }
+
+  if (pathname.startsWith("/admin")) {
+    let title = "Blog Admin | Smit Devrukhkar";
+
+    if (pathname === "/admin/login") {
+      title = "Admin Sign In | Smit Devrukhkar";
+    } else if (pathname === "/admin/posts/new") {
+      title = "New Blog Post | Smit Devrukhkar";
+    } else if (/^\/admin\/posts\/[^/]+\/edit\/?$/.test(pathname)) {
+      title = "Edit Blog Post | Smit Devrukhkar";
+    } else if (pathname.startsWith("/admin/replies")) {
+      title = "Moderate Replies | Smit Devrukhkar";
+    } else if (pathname.startsWith("/admin/posts")) {
+      title = "Manage Blog Posts | Smit Devrukhkar";
+    }
+
+    return (
+      <PageMetadata
+        canonicalPath={pathname}
+        description="Private blog administration for Smit Devrukhkar."
+        noIndex
+        title={title}
+      />
+    );
+  }
+
+  return (
+    <PageMetadata
+      canonicalPath={pathname}
+      description="The requested page could not be found."
+      noIndex
+      title="Page Not Found | Smit Devrukhkar"
+    />
+  );
+}
 
 export default function App() {
   const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
@@ -38,7 +102,8 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <MetadataProvider baseUrl={siteConfig?.productionWebsiteUrl}>
+      <RouteMetadata />
       {siteConfig?.developmentWebsite ? (
         <div className={styles.environmentBanner} role="status">
           <p className={styles.environmentBannerText}>
@@ -68,9 +133,9 @@ export default function App() {
           <Route path="/admin/posts/:id/edit" element={<AdminPostFormPage />} />
           <Route path="/admin/replies" element={<AdminRepliesPage />} />
           <Route path="/admin/*" element={<Navigate to="/admin/posts" replace />} />
-          <Route path="*" element={<HomePage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-    </>
+    </MetadataProvider>
   );
 }

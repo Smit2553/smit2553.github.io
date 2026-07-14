@@ -120,7 +120,7 @@ function requireObjectBody(body: unknown): ReplyPayload {
   return body as ReplyPayload;
 }
 
-function readRequiredTextField(value: unknown, fieldName: string): string {
+function readRequiredTextField(value: unknown, fieldName: string, maximumLength: number): string {
   if (typeof value !== "string") {
     throw new ReplyError(400, `${fieldName} is required.`);
   }
@@ -131,10 +131,14 @@ function readRequiredTextField(value: unknown, fieldName: string): string {
     throw new ReplyError(400, `${fieldName} is required.`);
   }
 
+  if (normalized.length > maximumLength) {
+    throw new ReplyError(400, `${fieldName} must not exceed ${maximumLength} characters.`);
+  }
+
   return normalized;
 }
 
-function readRequiredPlainTextField(value: unknown, fieldName: string): string {
+function readRequiredPlainTextField(value: unknown, fieldName: string, maximumLength: number): string {
   if (typeof value !== "string") {
     throw new ReplyError(400, `${fieldName} is required.`);
   }
@@ -143,10 +147,14 @@ function readRequiredPlainTextField(value: unknown, fieldName: string): string {
     throw new ReplyError(400, `${fieldName} is required.`);
   }
 
+  if (value.length > maximumLength) {
+    throw new ReplyError(400, `${fieldName} must not exceed ${maximumLength} characters.`);
+  }
+
   return value;
 }
 
-function readOptionalTextField(value: unknown, fieldName: string): string | null {
+function readOptionalTextField(value: unknown, fieldName: string, maximumLength: number): string | null {
   if (value === undefined || value === null) {
     return null;
   }
@@ -156,6 +164,10 @@ function readOptionalTextField(value: unknown, fieldName: string): string | null
   }
 
   const normalized = value.trim();
+
+  if (normalized.length > maximumLength) {
+    throw new ReplyError(400, `${fieldName} must not exceed ${maximumLength} characters.`);
+  }
 
   return normalized.length === 0 ? null : normalized;
 }
@@ -260,11 +272,11 @@ export async function createPublishedBlogReplyBySlug(slug: string, body: unknown
     throw new ReplyError(400, "Unable to submit reply.");
   }
 
-  const authorName = readRequiredTextField(payload.authorName ?? payload.author_name, "Author name");
-  const replyBody = readRequiredPlainTextField(payload.body, "Reply body");
-  const authorEmail = readOptionalTextField(payload.authorEmail ?? payload.author_email, "Author email");
+  const authorName = readRequiredTextField(payload.authorName ?? payload.author_name, "Author name", 80);
+  const replyBody = readRequiredPlainTextField(payload.body, "Reply body", 4000);
+  const authorEmail = readOptionalTextField(payload.authorEmail ?? payload.author_email, "Author email", 254);
   const parentReplyIdValue = payload.parentReplyId ?? payload.parent_reply_id;
-  const parentReplyId = readOptionalTextField(parentReplyIdValue, "Parent reply id");
+  const parentReplyId = readOptionalTextField(parentReplyIdValue, "Parent reply id", 128);
   const moderation = moderateReply(authorName, authorEmail, replyBody);
   const spamBlockReason = getReplySpamBlockReason(moderation, replyBody);
 

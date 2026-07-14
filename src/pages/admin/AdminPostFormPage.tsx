@@ -404,9 +404,11 @@ export default function AdminPostFormPage() {
                     autoComplete="off"
                     className={styles.input}
                     id="post-slug"
+                    maxLength={120}
                     name="slug"
                     onChange={(event) => updateForm({ slug: event.target.value })}
                     placeholder="my-post-slug"
+                    pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
                     spellCheck={false}
                     type="text"
                     value={form.slug}
@@ -435,6 +437,7 @@ export default function AdminPostFormPage() {
                 <input
                   className={styles.input}
                   id="post-title"
+                  maxLength={200}
                   name="title"
                   onChange={(event) => updateForm({ title: event.target.value })}
                   placeholder="Working title"
@@ -448,6 +451,7 @@ export default function AdminPostFormPage() {
                 <textarea
                   className={styles.textarea}
                   id="post-summary"
+                  maxLength={500}
                   name="summary"
                   onChange={(event) => updateForm({ summary: event.target.value })}
                   placeholder="Short summary for cards and previews"
@@ -462,6 +466,7 @@ export default function AdminPostFormPage() {
                 <input
                   className={styles.input}
                   id="post-cover-image-url"
+                  maxLength={2048}
                   name="coverImageUrl"
                   onChange={(event) => updateForm({ coverImageUrl: event.target.value })}
                   placeholder="https://example.com/cover-image.jpg"
@@ -477,6 +482,7 @@ export default function AdminPostFormPage() {
                 <textarea
                   className={styles.textarea}
                   id="post-content"
+                  maxLength={30000}
                   name="content"
                   onChange={(event) => updateForm({ content: event.target.value })}
                   placeholder="Write the article in markdown..."

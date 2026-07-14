@@ -413,6 +413,46 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .experienceScrollTrack {
+    height: auto;
+  }
+
+  .experienceSticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+
+  .experienceStickyInner {
+    height: auto;
+    overflow: visible;
+  }
+
+  .experienceSectionInner {
+    height: auto;
+  }
+
+  .timelineWrapper {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .timelineRail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    width: 100%;
+    padding-inline: 0;
+  }
+
+  .timelineItem {
+    width: auto;
+  }
+
+  .timelineAxisLine {
+    display: none;
+  }
+
   .timelineRail,
   .timelineCard,
   .timelineLogo,

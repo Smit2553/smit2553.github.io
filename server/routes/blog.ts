@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import { assertRateLimit, RateLimitError } from "../rate-limit";
 import {
   BlogError,
@@ -17,9 +17,12 @@ import { getOrCreateVisitorId } from "../visitor";
 import { readPositiveIntegerQueryParam, readRouteParam } from "./params";
 
 const blogRouter = Router();
+const defaultPostLimit = 50;
+const maximumPostLimit = 100;
 
-function respondWithBlogError(response: Response, error: unknown, fallbackMessage: string): void {
+function respondWithBlogError(response: Response, error: unknown, next: NextFunction): void {
   if (error instanceof RateLimitError) {
+    response.set("Retry-After", String(error.retryAfterSeconds));
     response.status(error.status).json({ error: error.message });
     return;
   }
@@ -29,11 +32,12 @@ function respondWithBlogError(response: Response, error: unknown, fallbackMessag
     return;
   }
 
-  response.status(500).json({ error: fallbackMessage });
+  next(error);
 }
 
-function respondWithReplyError(response: Response, error: unknown, fallbackMessage: string): void {
+function respondWithReplyError(response: Response, error: unknown, next: NextFunction): void {
   if (error instanceof RateLimitError) {
+    response.set("Retry-After", String(error.retryAfterSeconds));
     response.status(error.status).json({ error: error.message });
     return;
   }
@@ -43,27 +47,27 @@ function respondWithReplyError(response: Response, error: unknown, fallbackMessa
     return;
   }
 
-  response.status(500).json({ error: fallbackMessage });
+  next(error);
 }
 
-blogRouter.get("/", async (request: Request, response: Response) => {
+blogRouter.get("/", async (request: Request, response: Response, next: NextFunction) => {
   try {
-    const parsedLimit = readPositiveIntegerQueryParam(request.query.limit);
+    const parsedLimit = readPositiveIntegerQueryParam(request.query.limit, maximumPostLimit);
 
     if (parsedLimit === null) {
-      response.status(400).json({ error: "limit must be a positive integer." });
+      response.status(400).json({ error: `limit must be an integer between 1 and ${maximumPostLimit}.` });
       return;
     }
 
-    const posts = await listPublishedBlogPosts(parsedLimit);
+    const posts = await listPublishedBlogPosts(parsedLimit ?? defaultPostLimit);
 
     response.json({ posts });
   } catch (error) {
-    respondWithBlogError(response, error, "Unable to load blog content.");
+    respondWithBlogError(response, error, next);
   }
 });
 
-blogRouter.get("/:slug", async (request: Request, response: Response) => {
+blogRouter.get("/:slug", async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
 
@@ -81,22 +85,22 @@ blogRouter.get("/:slug", async (request: Request, response: Response) => {
 
     response.json({ post });
   } catch (error) {
-    respondWithBlogError(response, error, "Unable to load blog content.");
+    respondWithBlogError(response, error, next);
   }
 });
 
-blogRouter.get("/:slug/replies", async (request: Request, response: Response) => {
+blogRouter.get("/:slug/replies", async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
     const replies = await listPublishedBlogRepliesBySlug(slug);
 
     response.json({ replies });
   } catch (error) {
-    respondWithReplyError(response, error, "Unable to load replies.");
+    respondWithReplyError(response, error, next);
   }
 });
 
-blogRouter.post("/:slug/replies", async (request: Request, response: Response) => {
+blogRouter.post("/:slug/replies", async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
     assertRateLimit(request, "reply:create", 5, 1000 * 60 * 10);
@@ -104,11 +108,11 @@ blogRouter.post("/:slug/replies", async (request: Request, response: Response) =
     await createPublishedBlogReplyBySlug(slug, request.body);
     response.json({ ok: true });
   } catch (error) {
-    respondWithReplyError(response, error, "Unable to submit reply.");
+    respondWithReplyError(response, error, next);
   }
 });
 
-blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, response: Response) => {
+blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
     const replyId = readRouteParam(request.params.replyId);
@@ -119,11 +123,11 @@ blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, respon
 
     response.json(result);
   } catch (error) {
-    respondWithReplyError(response, error, "Unable to like reply.");
+    respondWithReplyError(response, error, next);
   }
 });
 
-async function handleLikeRequest(request: Request, response: Response): Promise<void> {
+async function handleLikeRequest(request: Request, response: Response, next: NextFunction): Promise<void> {
   try {
     const slug = readRouteParam(request.params.slug);
     const visitorId = getOrCreateVisitorId(request, response);
@@ -133,11 +137,11 @@ async function handleLikeRequest(request: Request, response: Response): Promise<
 
     response.json(result);
   } catch (error) {
-    respondWithBlogError(response, error, "Unable to like blog post.");
+    respondWithBlogError(response, error, next);
   }
 }
 
-async function handleLikeRequestById(request: Request, response: Response): Promise<void> {
+async function handleLikeRequestById(request: Request, response: Response, next: NextFunction): Promise<void> {
   try {
     const id = readRouteParam(request.params.id);
     const visitorId = getOrCreateVisitorId(request, response);
@@ -147,7 +151,7 @@ async function handleLikeRequestById(request: Request, response: Response): Prom
 
     response.json(result);
   } catch (error) {
-    respondWithBlogError(response, error, "Unable to like blog post.");
+    respondWithBlogError(response, error, next);
   }
 }
 

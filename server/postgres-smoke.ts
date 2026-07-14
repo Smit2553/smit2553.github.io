@@ -1,10 +1,11 @@
 type SmokeRow = {
   current_database: string;
   current_user: string;
-  schema_exists: boolean;
   schema_access: boolean;
-  table_count: number;
+  migration_count: number;
 };
+
+import { databaseConnectionOptions, requireSchemaName, validateMigrationState, validateRequiredConstraints, validateRequiredSchema } from "./database-runtime";
 
 function isMissingEnvFile(error: unknown): boolean {
   return typeof error === "object"
@@ -49,50 +50,33 @@ function requireDatabaseUrl(databaseUrl: string): string {
   return trimmed;
 }
 
-function shouldRequireSsl(databaseUrl: string): boolean {
-  try {
-    const url = new URL(databaseUrl);
-    const sslMode = url.searchParams.get("sslmode")?.toLowerCase();
-
-    if (sslMode === "disable") {
-      return false;
-    }
-
-    if (sslMode === "require") {
-      return true;
-    }
-
-    return url.hostname.includes("supabase");
-  } catch {
-    return false;
-  }
-}
-
 async function main(): Promise<void> {
   loadRepoEnvFile();
 
   const postgresModule = await import("postgres");
   const postgres = postgresModule.default;
   const url = requireDatabaseUrl(process.env.DATABASE_URL ?? "");
-  const blogDbSchema = process.env.BLOG_DB_SCHEMA?.trim() || (process.env.NODE_ENV === "production" ? "blog_prod" : "blog_dev");
+  const appEnv = process.env.BLOG_APP_ENV?.trim().toLowerCase();
 
-  const sql = postgres(url, {
-    max: 1,
-    connect_timeout: 5,
-    idle_timeout: 5,
-    ssl: shouldRequireSsl(url) ? "require" : undefined,
-  });
+  if (appEnv !== "development" && appEnv !== "production") {
+    throw new Error('BLOG_APP_ENV must be "development" or "production".');
+  }
+
+  const production = appEnv === "production";
+
+  if (production !== (process.env.NODE_ENV === "production")) {
+    throw new Error("NODE_ENV and BLOG_APP_ENV must both select production or both select development.");
+  }
+
+  const blogDbSchema = requireSchemaName(process.env.BLOG_DB_SCHEMA?.trim() || (production ? "blog_prod" : "blog_dev"));
+
+  const sql = postgres(url, databaseConnectionOptions(url, production, 1));
 
   try {
     const [row] = await sql<SmokeRow[]>`
       select
         current_database() as current_database,
         current_user as current_user,
-        exists (
-          select 1
-          from pg_namespace
-          where nspname = ${blogDbSchema}
-        ) as schema_exists,
         coalesce((
           select has_schema_privilege(nspname, 'USAGE')
           from pg_namespace
@@ -102,23 +86,27 @@ async function main(): Promise<void> {
           select count(*)::int
           from information_schema.tables
           where table_schema = ${blogDbSchema}
-        ), 0) as table_count
+            and table_name = 'schema_migrations'
+        ), 0) as migration_count
     `;
 
     if (!row) {
       throw new Error("Unable to read database metadata.");
     }
 
-    if (!row.schema_exists) {
-      throw new Error(`Schema ${blogDbSchema} does not exist.`);
-    }
-
     if (!row.schema_access) {
       throw new Error(`Schema ${blogDbSchema} is not accessible.`);
     }
 
+    await validateRequiredSchema(sql, blogDbSchema);
+    await validateRequiredConstraints(sql, blogDbSchema);
+
+    if (production) {
+      await validateMigrationState(sql, blogDbSchema);
+    }
+
     console.log(
-      `Postgres smoke check passed: database=${row.current_database} user=${row.current_user} schema=${blogDbSchema} tables=${row.table_count}`,
+      `Postgres readiness check passed: database=${row.current_database} user=${row.current_user} schema=${blogDbSchema} migrations_table=${row.migration_count === 1 ? "present" : "legacy"}`,
     );
   } finally {
     await sql.end({ timeout: 5 });

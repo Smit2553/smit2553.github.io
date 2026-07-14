@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { productionMode } from "./config";
 import {
   deleteAdminPostById as deleteAdminPostRow,
   getAdminPostById as getAdminPostRowById,
@@ -72,7 +73,7 @@ function requireObjectBody(body: unknown): AdminPostPayload {
   return body as AdminPostPayload;
 }
 
-function readRequiredTextField(value: unknown, fieldName: string): string {
+function readRequiredTextField(value: unknown, fieldName: string, maximumLength: number): string {
   if (typeof value !== "string") {
     throw new AdminPostError(400, `${fieldName} is required.`);
   }
@@ -83,7 +84,21 @@ function readRequiredTextField(value: unknown, fieldName: string): string {
     throw new AdminPostError(400, `${fieldName} is required.`);
   }
 
+  if (normalized.length > maximumLength) {
+    throw new AdminPostError(400, `${fieldName} must not exceed ${maximumLength} characters.`);
+  }
+
   return normalized;
+}
+
+function readSlugField(value: unknown): string {
+  const slug = readRequiredTextField(value, "Slug", 120).toLowerCase();
+
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new AdminPostError(400, "Slug must use lowercase letters, numbers, and single hyphens.");
+  }
+
+  return slug;
 }
 
 function readSummaryField(value: unknown): string | null {
@@ -96,6 +111,10 @@ function readSummaryField(value: unknown): string | null {
   }
 
   const normalized = value.trim();
+
+  if (normalized.length > 500) {
+    throw new AdminPostError(400, "Summary must not exceed 500 characters.");
+  }
 
   return normalized.length === 0 ? null : normalized;
 }
@@ -115,14 +134,24 @@ function readCoverImageUrlField(value: unknown): string | null {
     return null;
   }
 
+  if (normalized.length > 2048) {
+    throw new AdminPostError(400, "Cover image URL must not exceed 2048 characters.");
+  }
+
   try {
     const parsed = new URL(normalized);
 
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       throw new Error("invalid");
     }
+
+    if (productionMode && parsed.protocol !== "https:") {
+      throw new Error("invalid");
+    }
   } catch {
-    throw new AdminPostError(400, "Cover image URL must be a valid http or https URL.");
+    throw new AdminPostError(400, productionMode
+      ? "Cover image URL must be a valid https URL."
+      : "Cover image URL must be a valid http or https URL.");
   }
 
   return normalized;
@@ -135,6 +164,10 @@ function readContentField(value: unknown): string {
 
   if (value.trim().length === 0) {
     throw new AdminPostError(400, "Content is required.");
+  }
+
+  if (value.length > 30_000) {
+    throw new AdminPostError(400, "Content must not exceed 30000 characters.");
   }
 
   return value;
@@ -219,8 +252,8 @@ export async function readAdminPostById(id: string): Promise<AdminPostDetail | n
 
 export async function createAdminPost(body: unknown): Promise<AdminPostDetail> {
   const payload = requireObjectBody(body);
-  const title = readRequiredTextField(payload.title, "Title");
-  const slug = readRequiredTextField(payload.slug, "Slug");
+  const title = readRequiredTextField(payload.title, "Title", 200);
+  const slug = readSlugField(payload.slug);
   const summary = Object.prototype.hasOwnProperty.call(payload, "summary")
     ? readSummaryField(payload.summary)
     : null;
@@ -281,8 +314,8 @@ export async function updateAdminPost(id: string, body: unknown): Promise<AdminP
     throw new AdminPostError(400, "At least one post field is required.");
   }
 
-  const title = hasTitle ? readRequiredTextField(payload.title, "Title") : existing.title;
-  const slug = hasSlug ? readRequiredTextField(payload.slug, "Slug") : existing.slug;
+  const title = hasTitle ? readRequiredTextField(payload.title, "Title", 200) : existing.title;
+  const slug = hasSlug ? readSlugField(payload.slug) : existing.slug;
   const summary = hasSummary ? readSummaryField(payload.summary) : existing.summary;
   const coverImageUrl = hasCoverImageUrl
     ? readCoverImageUrlField(payload.coverImageUrl ?? payload.cover_image_url)

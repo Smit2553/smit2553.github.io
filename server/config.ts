@@ -62,6 +62,86 @@ function envOrDevDefault(name: string, devDefault: string): string {
   return devDefault;
 }
 
+function readAdminUsername(): string {
+  const username = envOrDevDefault("BLOG_ADMIN_USERNAME", "admin").trim();
+
+  if (username.length === 0 || username.length > 128) {
+    throw new Error("BLOG_ADMIN_USERNAME must be between 1 and 128 characters");
+  }
+
+  if (/[\u0000-\u001f\u007f]/.test(username)) {
+    throw new Error("BLOG_ADMIN_USERNAME must not contain control characters");
+  }
+
+  return username;
+}
+
+function readAdminPassword(username: string): string {
+  const password = envOrDevDefault("BLOG_ADMIN_PASSWORD", "admin-dev-only");
+
+  if (password.length > 1024) {
+    throw new Error("BLOG_ADMIN_PASSWORD must not exceed 1024 characters");
+  }
+
+  if (!isProduction) {
+    return password;
+  }
+
+  const normalizedPassword = password.trim().toLowerCase();
+  const rejectedPasswords = new Set([
+    "admin-dev-only",
+    "changeme",
+    "password",
+    "password123",
+    "replace-with-a-strong-password",
+  ]);
+
+  if (password.length < 16) {
+    throw new Error("BLOG_ADMIN_PASSWORD must be at least 16 characters in production");
+  }
+
+  if (rejectedPasswords.has(normalizedPassword) || normalizedPassword === username.toLowerCase()) {
+    throw new Error("BLOG_ADMIN_PASSWORD must not be a placeholder or match BLOG_ADMIN_USERNAME in production");
+  }
+
+  return password;
+}
+
+function readPublicOrigin(): string | null {
+  const value = process.env.BLOG_PUBLIC_ORIGIN?.trim();
+
+  if (!value) {
+    if (isProduction) {
+      throw new Error("BLOG_PUBLIC_ORIGIN is required in production");
+    }
+
+    return null;
+  }
+
+  let url: URL;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("BLOG_PUBLIC_ORIGIN must be a valid absolute URL");
+  }
+
+  if ((url.protocol !== "http:" && url.protocol !== "https:")
+    || url.username.length > 0
+    || url.password.length > 0
+    || (url.pathname !== "/" && url.pathname !== "")
+    || url.search.length > 0
+    || url.hash.length > 0) {
+    throw new Error("BLOG_PUBLIC_ORIGIN must contain only an http(s) origin without credentials, a path, query, or fragment");
+  }
+
+  if (isProduction && url.protocol !== "https:") {
+    throw new Error("BLOG_PUBLIC_ORIGIN must use https in production");
+  }
+
+  return url.origin;
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
 
@@ -105,6 +185,14 @@ function readVisitorCookieSecret(): string {
     throw new Error("BLOG_VISITOR_COOKIE_SECRET must be at least 32 characters in production");
   }
 
+  const normalizedSecret = secret.toLowerCase();
+
+  if (normalizedSecret === "replace-with-at-least-32-random-characters"
+    || normalizedSecret === "dev-visitor-cookie-secret-not-for-production"
+    || /^(.)\1+$/.test(secret)) {
+    throw new Error("BLOG_VISITOR_COOKIE_SECRET must be a randomly generated secret, not a placeholder");
+  }
+
   return secret;
 }
 
@@ -134,10 +222,11 @@ export const sqlitePath = path.resolve(
   process.cwd(),
   sqlitePathEnv ?? "data/blog.sqlite",
 );
-export const adminUsername = envOrDevDefault("BLOG_ADMIN_USERNAME", "admin");
-export const adminPassword = envOrDevDefault("BLOG_ADMIN_PASSWORD", "admin-dev-only");
+export const adminUsername = readAdminUsername();
+export const adminPassword = readAdminPassword(adminUsername);
 export const adminSessionCookieName = process.env.BLOG_ADMIN_SESSION_COOKIE_NAME || "blog_admin_session";
 export const adminSessionTtlMs = parseNumberEnv("BLOG_ADMIN_SESSION_TTL_MS", 1000 * 60 * 60 * 24 * 7);
 export const productionMode = isProduction;
+export const publicOrigin = readPublicOrigin();
 export const visitorCookieName = process.env.BLOG_VISITOR_COOKIE_NAME || "blog_visitor";
 export const visitorCookieSecret = readVisitorCookieSecret();

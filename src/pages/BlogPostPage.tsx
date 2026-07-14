@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import PageMetadata from "../components/PageMetadata";
 import BlogLikeButton from "../components/blog/BlogLikeButton";
 import BlogRepliesSection from "../components/blog/BlogRepliesSection";
 import MarkdownContent from "../components/blog/MarkdownContent";
@@ -68,109 +69,146 @@ export default function BlogPostPage() {
 
   if (state.status === "loading") {
     return (
-      <main className={styles.page}>
-        <div className={styles.articleShell}>
-          <div className={styles.statusCard}>
-            <h2 className={styles.statusTitle}>Loading post...</h2>
-            <p className={styles.statusText}>
-              Fetching the article content from the backend.
-            </p>
+      <>
+        <PageMetadata
+          canonicalPath={`/blog/${encodeURIComponent(slug ?? "")}`}
+          description="Loading a blog post from Smit Devrukhkar."
+          title="Loading Post | Smit Devrukhkar"
+        />
+        <main className={styles.page}>
+          <div className={styles.articleShell}>
+            <div className={styles.statusCard}>
+              <h2 className={styles.statusTitle}>Loading post...</h2>
+              <p className={styles.statusText}>
+                Fetching the article content from the backend.
+              </p>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   if (state.status === "notFound") {
     return (
-      <main className={styles.page}>
-        <div className={styles.articleShell}>
-          <div className={styles.emptyState}>
-            <p className={styles.eyebrow}>Blog</p>
-            <h1 className={styles.emptyTitle}>Post not found.</h1>
-            <p className={styles.emptyText}>
-              The requested article does not exist or is not public yet.
-            </p>
-            <div className={styles.emptyActions}>
-              <Link className={styles.buttonLink} to="/blog">
-                Back to writing
-              </Link>
-              <Link className={styles.buttonLink} to="/">
-                Back home
-              </Link>
+      <>
+        <PageMetadata
+          canonicalPath={`/blog/${encodeURIComponent(slug ?? "")}`}
+          description="The requested blog post could not be found."
+          noIndex
+          title="Post Not Found | Smit Devrukhkar"
+        />
+        <main className={styles.page}>
+          <div className={styles.articleShell}>
+            <div className={styles.emptyState}>
+              <p className={styles.eyebrow}>Blog</p>
+              <h1 className={styles.emptyTitle}>Post not found.</h1>
+              <p className={styles.emptyText}>
+                The requested article does not exist or is not public yet.
+              </p>
+              <div className={styles.emptyActions}>
+                <Link className={styles.buttonLink} to="/blog">
+                  Back to writing
+                </Link>
+                <Link className={styles.buttonLink} to="/">
+                  Back home
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   if (state.status === "error") {
     return (
-      <main className={styles.page}>
-        <div className={styles.articleShell}>
-          <div className={styles.statusCard}>
-            <p className={styles.eyebrow}>Blog</p>
-            <h1 className={styles.statusTitle}>Unable to load the post.</h1>
-            <p className={styles.statusText}>{state.message}</p>
-            <div className={styles.statusActions}>
-              <Link className={styles.buttonLink} to="/blog">
-                Back to writing
-              </Link>
-              <Link className={styles.buttonLink} to="/">
-                Back home
-              </Link>
+      <>
+        <PageMetadata
+          canonicalPath={`/blog/${encodeURIComponent(slug ?? "")}`}
+          description="This blog post is temporarily unavailable."
+          noIndex
+          title="Post Unavailable | Smit Devrukhkar"
+        />
+        <main className={styles.page}>
+          <div className={styles.articleShell}>
+            <div className={styles.statusCard}>
+              <p className={styles.eyebrow}>Blog</p>
+              <h1 className={styles.statusTitle}>Unable to load the post.</h1>
+              <p className={styles.statusText}>{state.message}</p>
+              <div className={styles.statusActions}>
+                <Link className={styles.buttonLink} to="/blog">
+                  Back to writing
+                </Link>
+                <Link className={styles.buttonLink} to="/">
+                  Back home
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   const { post } = state;
 
   return (
-    <main className={styles.page}>
-      <article className={styles.articleShell}>
-        <header className={styles.articleHeader}>
-          <p className={styles.eyebrow}>Blog</p>
-          <h1 className={styles.articleTitle}>{post.title}</h1>
-          <div className={styles.articleMeta}>
-            <time className={styles.articleDate} dateTime={post.publishedAt}>
-              Published {formatBlogDate(post.publishedAt)}
-            </time>
-            {post.updatedAt !== post.publishedAt && (
-              <span>Updated {formatBlogDate(post.updatedAt)}</span>
-            )}
-          </div>
-          {post.summary && <p className={styles.articleSummary}>{post.summary}</p>}
-          <div className={styles.pageActions}>
-            <BlogLikeButton
-              initialLikeCount={post.likeCount}
-              postId={post.id}
-              title={post.title}
-            />
-            <Link className={styles.buttonLink} to="/blog">
-              Back to writing
-            </Link>
-            <Link className={styles.buttonLink} to="/">
-              Back home
-            </Link>
-          </div>
-        </header>
+    <>
+      <PageMetadata
+        canonicalPath={`/blog/${encodeURIComponent(post.slug)}`}
+        description={post.summary || post.excerpt}
+        imageUrl={post.coverImageUrl}
+        title={`${post.title} | Smit Devrukhkar`}
+        type="article"
+      />
+      <main className={styles.page}>
+        <article className={styles.articleShell}>
+          <header className={styles.articleHeader}>
+            <p className={styles.eyebrow}>Blog</p>
+            <h1 className={styles.articleTitle}>{post.title}</h1>
+            <div className={styles.articleMeta}>
+              <time className={styles.articleDate} dateTime={post.publishedAt}>
+                Published {formatBlogDate(post.publishedAt)}
+              </time>
+              {post.updatedAt !== post.publishedAt && (
+                <span>Updated {formatBlogDate(post.updatedAt)}</span>
+              )}
+            </div>
+            {post.summary && <p className={styles.articleSummary}>{post.summary}</p>}
+            <div className={styles.pageActions}>
+              <BlogLikeButton
+                initialLikeCount={post.likeCount}
+                postId={post.id}
+                title={post.title}
+              />
+              <Link className={styles.buttonLink} to="/blog">
+                Back to writing
+              </Link>
+              <Link className={styles.buttonLink} to="/">
+                Back home
+              </Link>
+            </div>
+          </header>
 
-        {post.coverImageUrl ? (
-          <div className={styles.articleCoverWrap}>
-            <img alt="" className={styles.articleCover} src={post.coverImageUrl} />
+          {post.coverImageUrl ? (
+            <div className={styles.articleCoverWrap}>
+              <img
+                alt=""
+                className={styles.articleCover}
+                decoding="async"
+                src={post.coverImageUrl}
+              />
+            </div>
+          ) : null}
+
+          <div className={styles.articleContent}>
+            <MarkdownContent content={post.content} />
           </div>
-        ) : null}
 
-        <div className={styles.articleContent}>
-          <MarkdownContent content={post.content} />
-        </div>
-
-        <BlogRepliesSection postTitle={post.title} slug={post.slug} />
-      </article>
-    </main>
+          <BlogRepliesSection postTitle={post.title} slug={post.slug} />
+        </article>
+      </main>
+    </>
   );
 }

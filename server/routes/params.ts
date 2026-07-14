@@ -10,7 +10,7 @@ export function readRouteParam(value: string | string[] | undefined): string {
   return "";
 }
 
-export function readPositiveIntegerQueryParam(value: unknown): number | undefined | null {
+export function readPositiveIntegerQueryParam(value: unknown, maximum = 100): number | undefined | null {
   if (value === undefined) {
     return undefined;
   }
@@ -27,7 +27,7 @@ export function readPositiveIntegerQueryParam(value: unknown): number | undefine
 
   const parsed = Number(normalized);
 
-  if (!Number.isInteger(parsed) || parsed <= 0) {
+  if (!Number.isInteger(parsed) || parsed <= 0 || parsed > maximum) {
     return null;
   }
 
