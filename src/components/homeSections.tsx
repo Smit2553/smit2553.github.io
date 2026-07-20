@@ -13,7 +13,7 @@ type ExperienceEntry = {
 
 const experienceEntries: ExperienceEntry[] = [
   {
-    title: "Undergraduate Researcher",
+    title: "Researcher",
     company: "VISA Research Lab, Arizona State University",
     duration: "December 2025 - Present",
     description:
@@ -21,9 +21,16 @@ const experienceEntries: ExperienceEntry[] = [
     logoUrl: "/logos/visa_research_lab_logo.jpg",
   },
   {
+    title: "Research Technology Support Representative",
+    company: "Knowledge Enterprise, Arizona State University",
+    duration: "September 2024 - Present",
+    description: "Knowledge Enterprise is the research arm of Arizona State University.",
+    logoUrl: "/logos/asuicon.jpg",
+  },
+  {
     title: "Software Engineering Intern",
     company: "Defined Bioscience",
-    duration: "September 2025 - Present",
+    duration: "September 2025 - May 2026",
     description: "Software engineering intern working on biotechnology solutions.",
     logoUrl: "/logos/defined_bioscience_logo.jpg",
   },
@@ -32,13 +39,6 @@ const experienceEntries: ExperienceEntry[] = [
     company: "School of Computing and Augmented Intelligence, Arizona State University",
     duration: "August 2025 - December 2025",
     description: "Teaching assistant for operating systems course focusing on Linux kernel and Ubuntu.",
-    logoUrl: "/logos/asuicon.jpg",
-  },
-  {
-    title: "Research Technology Support Representative",
-    company: "Knowledge Enterprise, Arizona State University",
-    duration: "September 2024 - Present",
-    description: "Knowledge Enterprise is the research arm of Arizona State University.",
     logoUrl: "/logos/asuicon.jpg",
   },
   {
