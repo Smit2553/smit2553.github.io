@@ -2,27 +2,45 @@
   "name": "smit2553.github.io",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "BLOG_APP_ENV=development BLOG_DB_SCHEMA=blog_dev BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 concurrently \"npm:dev:client\" \"npm:dev:server\"",
+    "dev:client": "vite",
+    "dev:server": "BLOG_APP_ENV=development BLOG_DB_SCHEMA=blog_dev BLOG_ALLOW_DEV_ADMIN_DEFAULTS=1 tsx watch server/index.ts",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "tsc --noEmit && vite build",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "node server-dist/index.js",
+    "db:migrate": "tsx server/migrate.ts",
+    "db:smoke": "tsx server/postgres-smoke.ts",
+    "preview": "npm run start"
   },
   "dependencies": {
+    "express": "^5.2.1",
     "framer-motion": "^11.18.2",
-    "next": "^14.2.32",
+    "leo-profanity": "^1.9.0",
+    "postgres": "^3.4.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
-    "react-type-animation": "^3.2.0"
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.18.1",
+    "react-type-animation": "^3.2.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@types/node": "^20.19.15",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.32",
-    "typescript": "^5.9.2"
+    "@vitejs/plugin-react": "^5.0.2",
+    "concurrently": "^10.0.3",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7"
   },
   "overrides": {
     "glob": "^10.4.6"
