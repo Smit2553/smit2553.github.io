@@ -2,7 +2,6 @@ import express, { type NextFunction, type Request, type Response } from "express
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { constants as zlibConstants, createBrotliCompress, createGzip, type BrotliCompress, type Gzip } from "node:zlib";
 import adminRouter from "./routes/admin";
 import blogRouter from "./routes/blog";
 import { listSitemapPublishedPosts, readPublishedBlogPostMetaBySlug } from "./blog";
@@ -12,8 +11,6 @@ import { checkStorageReadiness } from "./storage";
 export const app = express();
 let clientIndexTemplatePromise: Promise<string> | null = null;
 const requestIdPattern = /^[A-Za-z0-9._-]{1,128}$/;
-const compressibleContentTypePattern = /^(?:text\/(?:html|css|plain|xml|javascript)|application\/(?:json|javascript|x-javascript|xml|xhtml\+xml)|image\/svg\+xml)\b/i;
-const minimumCompressionBytes = 256;
 
 app.disable("x-powered-by");
 // Coolify reaches the app over a private network. Trust only private proxy hops
@@ -55,197 +52,6 @@ function assignRequestId(request: Request, response: Response, next: NextFunctio
 
   response.locals.requestId = requestId;
   response.setHeader("X-Request-ID", requestId);
-  next();
-}
-
-function negotiateEncoding(acceptEncodingHeader: string | undefined): "br" | "gzip" | null {
-  if (!acceptEncodingHeader) {
-    return null;
-  }
-
-  if (/\bbr\b(?:;q=(?!0(?:\.0+)?\b)[0-9.]+)?/i.test(acceptEncodingHeader) && !/\bbr\s*;\s*q=0(?:\.0+)?\b/i.test(acceptEncodingHeader)) {
-    return "br";
-  }
-
-  if (/\bgzip\b(?:;q=(?!0(?:\.0+)?\b)[0-9.]+)?/i.test(acceptEncodingHeader) && !/\bgzip\s*;\s*q=0(?:\.0+)?\b/i.test(acceptEncodingHeader)) {
-    return "gzip";
-  }
-
-  return null;
-}
-
-function compressResponses(request: Request, response: Response, next: NextFunction): void {
-  response.vary("Accept-Encoding");
-
-  if (request.method === "HEAD") {
-    next();
-    return;
-  }
-
-  const negotiatedEncoding = negotiateEncoding(request.get("accept-encoding"));
-
-  if (!negotiatedEncoding) {
-    next();
-    return;
-  }
-
-  const rawWrite = response.write.bind(response);
-  const rawEnd = response.end.bind(response);
-  const rawWriteHead = response.writeHead.bind(response);
-  let compressor: BrotliCompress | Gzip | null = null;
-  let compressionDecided = false;
-
-  const initCompression = (explicitStatusCode?: number): void => {
-    if (compressionDecided) {
-      return;
-    }
-
-    compressionDecided = true;
-    const statusCode = explicitStatusCode ?? response.statusCode;
-
-    if (statusCode < 200 || statusCode === 204 || statusCode === 205 || statusCode === 304) {
-      return;
-    }
-
-    if (response.getHeader("Content-Encoding")) {
-      return;
-    }
-
-    const cacheControl = String(response.getHeader("Cache-Control") ?? "");
-
-    if (/\bno-transform\b/i.test(cacheControl)) {
-      return;
-    }
-
-    const contentType = String(response.getHeader("Content-Type") ?? "");
-
-    if (!compressibleContentTypePattern.test(contentType)) {
-      return;
-    }
-
-    const contentLengthHeader = response.getHeader("Content-Length");
-    const contentLength = contentLengthHeader !== undefined ? Number(contentLengthHeader) : Number.NaN;
-
-    if (Number.isFinite(contentLength) && contentLength < minimumCompressionBytes) {
-      return;
-    }
-
-    response.setHeader("Content-Encoding", negotiatedEncoding);
-    response.removeHeader("Content-Length");
-
-    compressor = negotiatedEncoding === "br"
-      ? createBrotliCompress({
-        params: {
-          [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
-        },
-      })
-      : createGzip({
-        level: zlibConstants.Z_DEFAULT_COMPRESSION,
-      });
-
-    compressor.on("data", (chunk: Buffer) => {
-      if (!rawWrite(chunk)) {
-        compressor?.pause();
-      }
-    });
-
-    response.on("drain", () => {
-      compressor?.resume();
-    });
-
-    compressor.on("end", () => {
-      rawEnd();
-    });
-
-    compressor.on("error", () => {
-      rawEnd();
-    });
-
-    response.on("close", () => {
-      compressor?.destroy();
-    });
-  };
-
-  response.writeHead = ((
-    statusCode: number,
-    statusMessageOrHeaders?: string | Record<string, number | string | ReadonlyArray<string>>,
-    maybeHeaders?: Record<string, number | string | ReadonlyArray<string>>,
-  ) => {
-    const headers = typeof statusMessageOrHeaders === "object" && statusMessageOrHeaders !== null
-      ? statusMessageOrHeaders
-      : maybeHeaders;
-
-    if (headers) {
-      for (const [key, value] of Object.entries(headers)) {
-        if (value !== undefined) {
-          response.setHeader(key, value);
-        }
-      }
-    }
-
-    initCompression(statusCode);
-
-    if (typeof statusMessageOrHeaders === "string") {
-      return rawWriteHead(statusCode, statusMessageOrHeaders);
-    }
-
-    return rawWriteHead(statusCode);
-  }) as typeof response.writeHead;
-
-  response.write = ((chunk: unknown, encodingOrCb?: BufferEncoding | ((error: Error | null | undefined) => void), cb?: (error: Error | null | undefined) => void): boolean => {
-    initCompression();
-
-    if (!compressor) {
-      return rawWrite(chunk as string, encodingOrCb as BufferEncoding, cb);
-    }
-
-    if (typeof encodingOrCb === "function") {
-      return compressor.write(chunk as string, encodingOrCb);
-    }
-
-    if (encodingOrCb !== undefined) {
-      return compressor.write(chunk as string, encodingOrCb, cb);
-    }
-
-    return compressor.write(chunk as string);
-  }) as typeof response.write;
-
-  response.end = ((chunk?: unknown, encodingOrCb?: BufferEncoding | (() => void), cb?: () => void): Response => {
-    if (!compressionDecided && chunk !== undefined && chunk !== null && typeof chunk !== "function") {
-      const hasContentLength = response.getHeader("Content-Length") !== undefined;
-      if (!hasContentLength) {
-        const byteLength = Buffer.isBuffer(chunk)
-          ? chunk.length
-          : typeof chunk === "string"
-            ? Buffer.byteLength(chunk, typeof encodingOrCb === "string" ? encodingOrCb : "utf8")
-            : 0;
-        if (byteLength > 0 && byteLength < minimumCompressionBytes) {
-          compressionDecided = true;
-        }
-      }
-    }
-
-    initCompression();
-
-    if (!compressor) {
-      return rawEnd(chunk as string, encodingOrCb as BufferEncoding, cb);
-    }
-
-    if (typeof chunk === "function") {
-      compressor.end(chunk);
-    } else if (typeof encodingOrCb === "function") {
-      compressor.end(chunk as string, encodingOrCb);
-    } else if (encodingOrCb !== undefined) {
-      compressor.end(chunk as string, encodingOrCb, cb);
-    } else if (chunk !== undefined) {
-      compressor.end(chunk as string);
-    } else {
-      compressor.end();
-    }
-
-    return response;
-  }) as typeof response.end;
-
   next();
 }
 
@@ -457,7 +263,6 @@ async function sendBlogClientIndex(request: Request, response: Response, next: N
 
 app.use(setSecurityHeaders);
 app.use(assignRequestId);
-app.use(compressResponses);
 app.use(logApiRequest);
 app.use(express.json({ limit: "32kb", type: "application/json" }));
 
