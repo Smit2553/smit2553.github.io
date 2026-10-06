@@ -8,6 +8,7 @@ import {
   fetchAdminReplies,
   formatAdminTimestamp,
   getAdminErrorMessage,
+  isAbortError,
   logoutAdmin,
   updateAdminReplyStatus,
   type AdminReply,
@@ -68,18 +69,19 @@ export default function AdminRepliesPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
     setState({ status: "loading" });
 
     void (async () => {
       try {
-        const replies = await fetchAdminReplies();
+        const replies = await fetchAdminReplies(controller.signal);
 
         if (active) {
           setState({ status: "ready", replies });
         }
       } catch (error) {
-        if (!active) {
+        if (!active || isAbortError(error)) {
           return;
         }
 
@@ -97,6 +99,7 @@ export default function AdminRepliesPage() {
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [location.pathname, navigate, reloadToken]);
 
@@ -107,11 +110,21 @@ export default function AdminRepliesPage() {
 
     try {
       await updateAdminReplyStatus(reply.id, status);
+      const updatedAt = new Date().toISOString();
+      setState((current) =>
+        current.status === "ready"
+          ? {
+              status: "ready",
+              replies: current.replies.map((item) =>
+                item.id === reply.id ? { ...item, status, updatedAt } : item,
+              ),
+            }
+          : current,
+      );
       setNotice({
         kind: "success",
         message: `${status === "approved" ? "Approved" : "Rejected"} reply from "${reply.authorName}".`,
       });
-      setReloadToken((value) => value + 1);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         navigate("/admin/login", {
@@ -138,8 +151,15 @@ export default function AdminRepliesPage() {
 
     try {
       await deleteAdminReply(reply.id);
+      setState((current) =>
+        current.status === "ready"
+          ? {
+              status: "ready",
+              replies: current.replies.filter((item) => item.id !== reply.id),
+            }
+          : current,
+      );
       setNotice({ kind: "success", message: `Deleted reply from "${reply.authorName}".` });
-      setReloadToken((value) => value + 1);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         navigate("/admin/login", {
@@ -206,7 +226,7 @@ export default function AdminRepliesPage() {
         {notice ? (
           <div
             className={`${styles.notice} ${notice.kind === "error" ? styles.noticeError : styles.noticeSuccess}`}
-            role="alert"
+            role={notice.kind === "error" ? "alert" : "status"}
           >
             {notice.message}
           </div>

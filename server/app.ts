@@ -2,14 +2,18 @@ import express, { type NextFunction, type Request, type Response } from "express
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { constants as zlibConstants, createBrotliCompress, createGzip, type BrotliCompress, type Gzip } from "node:zlib";
 import adminRouter from "./routes/admin";
 import blogRouter from "./routes/blog";
-import { listPublishedBlogPosts, readPublishedBlogPostBySlug } from "./blog";
+import { listSitemapPublishedPosts, readPublishedBlogPostMetaBySlug } from "./blog";
 import { blogDbSchema, clientDistPath, clientIndexPath, productionMode, publicOrigin } from "./config";
 import { checkStorageReadiness } from "./storage";
 
 export const app = express();
 let clientIndexTemplatePromise: Promise<string> | null = null;
+const requestIdPattern = /^[A-Za-z0-9._-]{1,128}$/;
+const compressibleContentTypePattern = /^(?:text\/(?:html|css|plain|xml|javascript)|application\/(?:json|javascript|x-javascript|xml|xhtml\+xml)|image\/svg\+xml)\b/i;
+const minimumCompressionBytes = 256;
 
 app.disable("x-powered-by");
 // Coolify reaches the app over a private network. Trust only private proxy hops
@@ -30,6 +34,7 @@ function setSecurityHeaders(_request: Request, response: Response, next: NextFun
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   ].join("; "));
   response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  response.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   response.setHeader("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
   response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   response.setHeader("X-Content-Type-Options", "nosniff");
@@ -44,12 +49,203 @@ function setSecurityHeaders(_request: Request, response: Response, next: NextFun
 
 function assignRequestId(request: Request, response: Response, next: NextFunction): void {
   const incomingRequestId = request.get("x-request-id")?.trim();
-  const requestId = incomingRequestId && incomingRequestId.length <= 128
+  const requestId = incomingRequestId && requestIdPattern.test(incomingRequestId)
     ? incomingRequestId
     : crypto.randomUUID();
 
   response.locals.requestId = requestId;
   response.setHeader("X-Request-ID", requestId);
+  next();
+}
+
+function negotiateEncoding(acceptEncodingHeader: string | undefined): "br" | "gzip" | null {
+  if (!acceptEncodingHeader) {
+    return null;
+  }
+
+  if (/\bbr\b(?:;q=(?!0(?:\.0+)?\b)[0-9.]+)?/i.test(acceptEncodingHeader) && !/\bbr\s*;\s*q=0(?:\.0+)?\b/i.test(acceptEncodingHeader)) {
+    return "br";
+  }
+
+  if (/\bgzip\b(?:;q=(?!0(?:\.0+)?\b)[0-9.]+)?/i.test(acceptEncodingHeader) && !/\bgzip\s*;\s*q=0(?:\.0+)?\b/i.test(acceptEncodingHeader)) {
+    return "gzip";
+  }
+
+  return null;
+}
+
+function compressResponses(request: Request, response: Response, next: NextFunction): void {
+  response.vary("Accept-Encoding");
+
+  if (request.method === "HEAD") {
+    next();
+    return;
+  }
+
+  const negotiatedEncoding = negotiateEncoding(request.get("accept-encoding"));
+
+  if (!negotiatedEncoding) {
+    next();
+    return;
+  }
+
+  const rawWrite = response.write.bind(response);
+  const rawEnd = response.end.bind(response);
+  const rawWriteHead = response.writeHead.bind(response);
+  let compressor: BrotliCompress | Gzip | null = null;
+  let compressionDecided = false;
+
+  const initCompression = (explicitStatusCode?: number): void => {
+    if (compressionDecided) {
+      return;
+    }
+
+    compressionDecided = true;
+    const statusCode = explicitStatusCode ?? response.statusCode;
+
+    if (statusCode < 200 || statusCode === 204 || statusCode === 205 || statusCode === 304) {
+      return;
+    }
+
+    if (response.getHeader("Content-Encoding")) {
+      return;
+    }
+
+    const cacheControl = String(response.getHeader("Cache-Control") ?? "");
+
+    if (/\bno-transform\b/i.test(cacheControl)) {
+      return;
+    }
+
+    const contentType = String(response.getHeader("Content-Type") ?? "");
+
+    if (!compressibleContentTypePattern.test(contentType)) {
+      return;
+    }
+
+    const contentLengthHeader = response.getHeader("Content-Length");
+    const contentLength = contentLengthHeader !== undefined ? Number(contentLengthHeader) : Number.NaN;
+
+    if (Number.isFinite(contentLength) && contentLength < minimumCompressionBytes) {
+      return;
+    }
+
+    response.setHeader("Content-Encoding", negotiatedEncoding);
+    response.removeHeader("Content-Length");
+
+    compressor = negotiatedEncoding === "br"
+      ? createBrotliCompress({
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
+        },
+      })
+      : createGzip({
+        level: zlibConstants.Z_DEFAULT_COMPRESSION,
+      });
+
+    compressor.on("data", (chunk: Buffer) => {
+      if (!rawWrite(chunk)) {
+        compressor?.pause();
+      }
+    });
+
+    response.on("drain", () => {
+      compressor?.resume();
+    });
+
+    compressor.on("end", () => {
+      rawEnd();
+    });
+
+    compressor.on("error", () => {
+      rawEnd();
+    });
+
+    response.on("close", () => {
+      compressor?.destroy();
+    });
+  };
+
+  response.writeHead = ((
+    statusCode: number,
+    statusMessageOrHeaders?: string | Record<string, number | string | ReadonlyArray<string>>,
+    maybeHeaders?: Record<string, number | string | ReadonlyArray<string>>,
+  ) => {
+    const headers = typeof statusMessageOrHeaders === "object" && statusMessageOrHeaders !== null
+      ? statusMessageOrHeaders
+      : maybeHeaders;
+
+    if (headers) {
+      for (const [key, value] of Object.entries(headers)) {
+        if (value !== undefined) {
+          response.setHeader(key, value);
+        }
+      }
+    }
+
+    initCompression(statusCode);
+
+    if (typeof statusMessageOrHeaders === "string") {
+      return rawWriteHead(statusCode, statusMessageOrHeaders);
+    }
+
+    return rawWriteHead(statusCode);
+  }) as typeof response.writeHead;
+
+  response.write = ((chunk: unknown, encodingOrCb?: BufferEncoding | ((error: Error | null | undefined) => void), cb?: (error: Error | null | undefined) => void): boolean => {
+    initCompression();
+
+    if (!compressor) {
+      return rawWrite(chunk as string, encodingOrCb as BufferEncoding, cb);
+    }
+
+    if (typeof encodingOrCb === "function") {
+      return compressor.write(chunk as string, encodingOrCb);
+    }
+
+    if (encodingOrCb !== undefined) {
+      return compressor.write(chunk as string, encodingOrCb, cb);
+    }
+
+    return compressor.write(chunk as string);
+  }) as typeof response.write;
+
+  response.end = ((chunk?: unknown, encodingOrCb?: BufferEncoding | (() => void), cb?: () => void): Response => {
+    if (!compressionDecided && chunk !== undefined && chunk !== null && typeof chunk !== "function") {
+      const hasContentLength = response.getHeader("Content-Length") !== undefined;
+      if (!hasContentLength) {
+        const byteLength = Buffer.isBuffer(chunk)
+          ? chunk.length
+          : typeof chunk === "string"
+            ? Buffer.byteLength(chunk, typeof encodingOrCb === "string" ? encodingOrCb : "utf8")
+            : 0;
+        if (byteLength > 0 && byteLength < minimumCompressionBytes) {
+          compressionDecided = true;
+        }
+      }
+    }
+
+    initCompression();
+
+    if (!compressor) {
+      return rawEnd(chunk as string, encodingOrCb as BufferEncoding, cb);
+    }
+
+    if (typeof chunk === "function") {
+      compressor.end(chunk);
+    } else if (typeof encodingOrCb === "function") {
+      compressor.end(chunk as string, encodingOrCb);
+    } else if (encodingOrCb !== undefined) {
+      compressor.end(chunk as string, encodingOrCb, cb);
+    } else if (chunk !== undefined) {
+      compressor.end(chunk as string);
+    } else {
+      compressor.end();
+    }
+
+    return response;
+  }) as typeof response.end;
+
   next();
 }
 
@@ -92,29 +288,70 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function redactSensitiveText(text: string): string {
+  return text
+    .replace(/(postgres(?:ql)?:\/\/[^:\s/]+:)[^@\s/]+@/gi, "$1[REDACTED]@")
+    .replace(/((?:password|secret|token)=)[^&\s]+/gi, "$1[REDACTED]");
+}
+
 function redactErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "Unknown error";
 
-  return message
-    .replace(/(postgres(?:ql)?:\/\/[^:\s/]+:)[^@\s/]+@/gi, "$1[REDACTED]@")
-    .replace(/((?:password|secret|token)=)[^&\s]+/gi, "$1[REDACTED]");
+  return redactSensitiveText(message);
+}
+
+function redactErrorStack(error: unknown): string | undefined {
+  if (!(error instanceof Error) || typeof error.stack !== "string") {
+    return undefined;
+  }
+
+  return redactSensitiveText(error.stack);
 }
 
 function replaceMetaTag(html: string, attribute: "name" | "property", key: string, content: string): string {
   const tagPattern = new RegExp(`<meta\\s+${attribute}=["']${key}["'][^>]*>`, "i");
   const tag = `<meta ${attribute}="${key}" content="${escapeHtml(content)}" />`;
 
-  return tagPattern.test(html) ? html.replace(tagPattern, tag) : html.replace("</head>", `    ${tag}\n  </head>`);
+  return tagPattern.test(html)
+    ? html.replace(tagPattern, () => tag)
+    : html.replace("</head>", () => `    ${tag}\n  </head>`);
 }
 
 function clientIndexTemplate(): Promise<string> {
-  clientIndexTemplatePromise ??= fs.readFile(clientIndexPath, "utf8");
+  if (!clientIndexTemplatePromise) {
+    clientIndexTemplatePromise = fs.readFile(clientIndexPath, "utf8").catch((error) => {
+      clientIndexTemplatePromise = null;
+      throw error;
+    });
+  }
 
   return clientIndexTemplatePromise;
 }
 
 function absolutePublicUrl(pathOrUrl: string): string {
-  return new URL(pathOrUrl, `${publicOrigin ?? "https://smit.codestacx.com"}/`).toString();
+  const baseUrl = `${publicOrigin ?? "https://smit.codestacx.com"}/`;
+  const normalizedPathOrUrl = pathOrUrl.startsWith("/")
+    ? `/${pathOrUrl.replace(/^\/+/, "")}`
+    : pathOrUrl;
+
+  try {
+    const resolved = new URL(normalizedPathOrUrl, baseUrl);
+
+    if (pathOrUrl.startsWith("/")) {
+      const baseOrigin = new URL(baseUrl).origin;
+      if (resolved.origin !== baseOrigin) {
+        return baseUrl;
+      }
+    }
+
+    if (resolved.protocol !== "http:" && resolved.protocol !== "https:") {
+      return baseUrl;
+    }
+
+    return resolved.toString();
+  } catch {
+    return baseUrl;
+  }
 }
 
 type PageMetadata = {
@@ -129,8 +366,8 @@ async function sendMetadataClientIndex(response: Response, next: NextFunction, m
     const canonicalUrl = absolutePublicUrl(metadata.canonicalPath);
     let html = await clientIndexTemplate();
 
-    html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(metadata.title)}</title>`);
-    html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+    html = html.replace(/<title>[^<]*<\/title>/i, () => `<title>${escapeHtml(metadata.title)}</title>`);
+    html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, () => `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
     html = replaceMetaTag(html, "name", "description", metadata.description);
     html = replaceMetaTag(html, "name", "robots", metadata.noIndex ? "noindex, nofollow" : "index, follow");
     html = replaceMetaTag(html, "property", "og:title", metadata.title);
@@ -175,14 +412,14 @@ function sendNotFoundIndex(request: Request, response: Response, next: NextFunct
 async function sendBlogClientIndex(request: Request, response: Response, next: NextFunction): Promise<void> {
   try {
     const slug = String(request.params.slug ?? "").trim();
-    const post = slug ? await readPublishedBlogPostBySlug(slug) : null;
+    const post = slug ? await readPublishedBlogPostMetaBySlug(slug) : null;
     let html = await clientIndexTemplate();
 
     if (!post) {
       response.status(404);
       const canonicalUrl = absolutePublicUrl(`/blog/${encodeURIComponent(slug)}`);
-      html = html.replace(/<title>[^<]*<\/title>/i, "<title>Post Not Found | Smit Devrukhkar</title>");
-      html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      html = html.replace(/<title>[^<]*<\/title>/i, () => "<title>Post Not Found | Smit Devrukhkar</title>");
+      html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, () => `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
       html = replaceMetaTag(html, "name", "description", "The requested blog post could not be found.");
       html = replaceMetaTag(html, "name", "robots", "noindex, nofollow");
       html = replaceMetaTag(html, "property", "og:title", "Post Not Found | Smit Devrukhkar");
@@ -193,8 +430,8 @@ async function sendBlogClientIndex(request: Request, response: Response, next: N
       const description = post.summary || post.excerpt;
       const canonicalUrl = absolutePublicUrl(`/blog/${encodeURIComponent(post.slug)}`);
 
-      html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-      html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
+      html = html.replace(/<title>[^<]*<\/title>/i, () => `<title>${escapeHtml(title)}</title>`);
+      html = html.replace(/<link\s+rel=["']canonical["'][^>]*>/i, () => `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`);
       html = replaceMetaTag(html, "name", "description", description);
       html = replaceMetaTag(html, "property", "og:title", title);
       html = replaceMetaTag(html, "property", "og:description", description);
@@ -220,6 +457,7 @@ async function sendBlogClientIndex(request: Request, response: Response, next: N
 
 app.use(setSecurityHeaders);
 app.use(assignRequestId);
+app.use(compressResponses);
 app.use(logApiRequest);
 app.use(express.json({ limit: "32kb", type: "application/json" }));
 
@@ -239,6 +477,7 @@ app.get("/api/ready", async (_request, response, next) => {
 });
 
 app.get("/api/site", (_req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=3600");
   res.json({
     developmentWebsite: blogDbSchema === "blog_dev",
     productionWebsiteUrl: "https://smit.codestacx.com",
@@ -247,7 +486,7 @@ app.get("/api/site", (_req, res) => {
 
 app.get("/sitemap.xml", async (_request, response, next) => {
   try {
-    const posts = await listPublishedBlogPosts(1000);
+    const posts = await listSitemapPublishedPosts(1000);
     const urls = [
       { location: absolutePublicUrl("/"), updatedAt: null },
       { location: absolutePublicUrl("/blog"), updatedAt: posts[0]?.updatedAt ?? null },
@@ -321,6 +560,7 @@ app.use((error: unknown, request: Request, response: Response, next: NextFunctio
     && error.status < 600
     ? error.status
     : 500;
+  const stack = status >= 500 ? redactErrorStack(error) : undefined;
 
   console.error(JSON.stringify({
     level: "error",
@@ -329,6 +569,7 @@ app.use((error: unknown, request: Request, response: Response, next: NextFunctio
     requestId,
     status,
     error: redactErrorMessage(error),
+    ...(stack ? { stack } : {}),
   }));
 
   if (response.headersSent) {

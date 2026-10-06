@@ -10,6 +10,7 @@ import {
   updateAdminPost as updateAdminPostRow,
   type AdminPostRow,
   type AdminPostSeed,
+  type AdminPostSummaryRow,
 } from "./storage";
 import { normalizeNullableText, normalizeText } from "./normalize";
 
@@ -191,7 +192,7 @@ function isSlugConstraintError(error: unknown): boolean {
   return isUniqueConstraintError(error, "posts_slug_key");
 }
 
-function toAdminPostSummary(row: AdminPostRow): AdminPostSummary {
+function toAdminPostSummary(row: AdminPostSummaryRow): AdminPostSummary {
   return {
     id: row.id,
     slug: normalizeText(row.slug),
@@ -358,11 +359,9 @@ export async function updateAdminPost(id: string, body: unknown): Promise<AdminP
 
 export async function deleteAdminPost(id: string): Promise<void> {
   const postId = normalizePostId(id);
-  const existing = await getAdminPostRowById(postId);
+  const deleted = await deleteAdminPostRow(postId);
 
-  if (!existing) {
+  if (!deleted) {
     throw new AdminPostError(404, "Post not found.");
   }
-
-  await deleteAdminPostRow(postId);
 }

@@ -117,12 +117,11 @@
   gap: 0.45rem;
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(34, 40, 49, 0.68);
   border: 1px solid rgba(249, 249, 249, 0.16);
   color: rgba(249, 249, 249, 0.95);
   font-size: 0.82rem;
   line-height: 1.2;
-  backdrop-filter: blur(4px);
 }
 
 .icon {

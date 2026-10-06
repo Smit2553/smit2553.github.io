@@ -58,7 +58,6 @@ adminRouter.post("/login", async (request: Request, response: Response) => {
   try {
     assertRateLimit(request, "admin:login:ip", 20, loginRateLimitWindowMs);
     assertRateLimit(request, "admin:login:account", 5, loginRateLimitWindowMs, `${clientIp}:${normalizedUsername}`);
-    assertRateLimit(request, "admin:login:username", 10, loginRateLimitWindowMs, normalizedUsername);
   } catch (error) {
     if (error instanceof RateLimitError) {
       response.set("Retry-After", String(error.retryAfterSeconds));

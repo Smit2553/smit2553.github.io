@@ -217,11 +217,6 @@ export const clientDistPath = path.resolve(process.cwd(), "dist");
 export const clientIndexPath = path.join(clientDistPath, "index.html");
 export const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
 export const blogDbSchema = readBlogDbSchema();
-const sqlitePathEnv = process.env.BLOG_SQLITE_PATH || process.env.DATABASE_PATH;
-export const sqlitePath = path.resolve(
-  process.cwd(),
-  sqlitePathEnv ?? "data/blog.sqlite",
-);
 export const adminUsername = readAdminUsername();
 export const adminPassword = readAdminPassword(adminUsername);
 export const adminSessionCookieName = process.env.BLOG_ADMIN_SESSION_COOKIE_NAME || "blog_admin_session";

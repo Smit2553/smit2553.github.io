@@ -7,7 +7,9 @@ import {
   deleteAdminPost,
   fetchAdminPosts,
   getAdminErrorMessage,
+  isAbortError,
   logoutAdmin,
+  type AdminPostStatus,
   type AdminPostSummary,
 } from "../../lib/admin";
 import { formatBlogDate } from "../../lib/blog";
@@ -44,6 +46,30 @@ function readNotice(state: unknown): string | null {
   return notice;
 }
 
+function getPostStatusLabel(status: AdminPostStatus): string {
+  if (status === "published") {
+    return "Published";
+  }
+
+  if (status === "archived") {
+    return "Archived";
+  }
+
+  return "Draft";
+}
+
+function getPostStatusClass(status: AdminPostStatus): string {
+  if (status === "published") {
+    return styles.badgePublished;
+  }
+
+  if (status === "archived") {
+    return styles.badgeArchived;
+  }
+
+  return styles.badgeDraft;
+}
+
 export default function AdminPostsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,18 +84,19 @@ export default function AdminPostsPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
     setState({ status: "loading" });
 
     void (async () => {
       try {
-        const posts = await fetchAdminPosts();
+        const posts = await fetchAdminPosts(controller.signal);
 
         if (active) {
           setState({ status: "ready", posts });
         }
       } catch (error) {
-        if (!active) {
+        if (!active || isAbortError(error)) {
           return;
         }
 
@@ -87,6 +114,7 @@ export default function AdminPostsPage() {
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [location.pathname, navigate, reloadToken]);
 
@@ -100,8 +128,15 @@ export default function AdminPostsPage() {
 
     try {
       await deleteAdminPost(post.id);
+      setState((current) =>
+        current.status === "ready"
+          ? {
+              status: "ready",
+              posts: current.posts.filter((item) => item.id !== post.id),
+            }
+          : current,
+      );
       setNotice({ kind: "success", message: `Deleted "${post.title}".` });
-      setReloadToken((value) => value + 1);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         navigate("/admin/login", {
@@ -142,6 +177,9 @@ export default function AdminPostsPage() {
   const publishedCount = state.status === "ready"
     ? state.posts.filter((post) => post.status === "published").length
     : 0;
+  const archivedCount = state.status === "ready"
+    ? state.posts.filter((post) => post.status === "archived").length
+    : 0;
 
   return (
     <AdminShell
@@ -173,7 +211,7 @@ export default function AdminPostsPage() {
         {notice ? (
           <div
             className={`${styles.notice} ${notice.kind === "error" ? styles.noticeError : styles.noticeSuccess}`}
-            role="alert"
+            role={notice.kind === "error" ? "alert" : "status"}
           >
             {notice.message}
           </div>
@@ -219,14 +257,14 @@ export default function AdminPostsPage() {
         {state.status === "ready" && state.posts.length > 0 ? (
           <>
             <p className={styles.listCount}>
-              {draftCount} drafts, {publishedCount} published
+              {draftCount} drafts, {publishedCount} published{archivedCount > 0 ? `, ${archivedCount} archived` : ""}
             </p>
 
             <div className={styles.list}>
               {state.posts.map((post) => {
                 const isDeleting = deletingId === post.id;
-                const statusLabel = post.status === "published" ? "Published" : "Draft";
-                const statusClass = post.status === "published" ? styles.badgePublished : styles.badgeDraft;
+                const statusLabel = getPostStatusLabel(post.status);
+                const statusClass = getPostStatusClass(post.status);
 
                 return (
                   <article className={styles.postCard} key={post.id}>
@@ -242,7 +280,11 @@ export default function AdminPostsPage() {
 
                       <div className={styles.postMeta}>
                         <span>Updated {formatBlogDate(post.updatedAt)}</span>
-                        <span>{post.status === "published" ? `Published ${formatBlogDate(post.publishedAt ?? post.updatedAt)}` : "Draft"}</span>
+                        <span>
+                          {post.status === "published"
+                            ? `Published ${formatBlogDate(post.publishedAt ?? post.updatedAt)}`
+                            : statusLabel}
+                        </span>
                       </div>
                     </div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  getBlogErrorMessage,
   hasLikedBlogPost,
   likeBlogPostById,
   markBlogPostLiked,
@@ -27,12 +28,17 @@ export default function BlogLikeButton({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [hasLiked, setHasLiked] = useState(() => hasLikedBlogPost(postId));
   const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setLikeCount(initialLikeCount);
+  }, [initialLikeCount]);
+
+  useEffect(() => {
     setHasLiked(hasLikedBlogPost(postId));
     setIsSaving(false);
-  }, [initialLikeCount, postId]);
+    setErrorMessage(null);
+  }, [postId]);
 
   const label = isSaving ? (hasLiked ? "Updating..." : "Liking...") : hasLiked ? "Liked" : "Like";
 
@@ -42,6 +48,7 @@ export default function BlogLikeButton({
     }
 
     setIsSaving(true);
+    setErrorMessage(null);
 
     try {
       const result = await likeBlogPostById(postId);
@@ -55,33 +62,41 @@ export default function BlogLikeButton({
       setLikeCount(result.likeCount);
       setHasLiked(result.liked);
     } catch (error) {
-      console.error(error);
+      setErrorMessage(getBlogErrorMessage(error));
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <button
-      aria-label={`${label} ${title}, ${formatLikeCount(likeCount)}`}
-      aria-pressed={hasLiked}
-      className={[
-        styles.likeButton,
-        compact ? styles.likeButtonCompact : "",
-        hasLiked ? styles.likeButtonLiked : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      disabled={isSaving}
-      type="button"
-      onClick={() => {
-        void handleLike();
-      }}
-    >
-      <span>{label}</span>
-      <span aria-live="polite" className={styles.likeButtonCount}>
-        {formatLikeCount(likeCount)}
-      </span>
-    </button>
+    <>
+      <button
+        aria-label={`${label} ${title}, ${formatLikeCount(likeCount)}`}
+        aria-pressed={hasLiked}
+        className={[
+          styles.likeButton,
+          compact ? styles.likeButtonCompact : "",
+          hasLiked ? styles.likeButtonLiked : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        disabled={isSaving}
+        title={errorMessage ?? undefined}
+        type="button"
+        onClick={() => {
+          void handleLike();
+        }}
+      >
+        <span>{label}</span>
+        <span aria-live="polite" className={styles.likeButtonCount}>
+          {formatLikeCount(likeCount)}
+        </span>
+      </button>
+      {errorMessage ? (
+        <span className={styles.likeError} role="alert">
+          {errorMessage}
+        </span>
+      ) : null}
+    </>
   );
 }

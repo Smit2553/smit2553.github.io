@@ -102,8 +102,6 @@ async function main(): Promise<void> {
       await validateRequiredConstraints(transaction, schema);
     });
 
-    await validateRequiredSchema(sql, schema);
-    await validateRequiredConstraints(sql, schema);
     await validateMigrationState(sql, schema);
     console.log(`Database migrations are current for ${schema}.`);
   } finally {

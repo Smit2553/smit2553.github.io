@@ -18,7 +18,7 @@ export default function BlogPreviewCard({ post }: BlogPreviewCardProps) {
       >
         {post.coverImageUrl ? (
           <div className={styles.postCardCoverWrap}>
-            <img alt="" className={styles.postCardCover} loading="lazy" src={post.coverImageUrl} />
+            <img alt="" className={styles.postCardCover} decoding="async" loading="lazy" src={post.coverImageUrl} />
           </div>
         ) : null}
 

@@ -5,11 +5,13 @@ import styles from "./admin.module.css";
 import {
   AdminApiError,
   type AdminPost,
+  clearAllAdminPostDrafts,
   createAdminPost,
   deleteAdminPost,
   fetchAdminHealth,
   fetchAdminPost,
   getAdminErrorMessage,
+  isAbortError,
   updateAdminPost,
   type AdminPostStatus,
 } from "../../lib/admin";
@@ -71,7 +73,7 @@ function isFormValues(value: unknown): value is FormValues {
     typeof form.content === "string"
     && typeof form.coverImageUrl === "string"
     && typeof form.slug === "string"
-    && (form.status === "draft" || form.status === "published")
+    && (form.status === "draft" || form.status === "published" || form.status === "archived")
     && typeof form.summary === "string"
     && typeof form.title === "string"
   );
@@ -135,31 +137,36 @@ export default function AdminPostFormPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const shouldPersistDraftRef = useRef(false);
+  const latestFormRef = useRef<FormValues>(form);
+  latestFormRef.current = form;
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
-    const persistedForm = readPersistedForm(draftStorageKey);
 
     shouldPersistDraftRef.current = false;
     setNotice(null);
     setSavedPost(null);
     setState({ status: "loading" });
-    setForm(persistedForm ?? createEmptyForm());
+    setForm(createEmptyForm());
 
     if (!isEditing || !id) {
       void (async () => {
         try {
-          await fetchAdminHealth();
+          await fetchAdminHealth(controller.signal);
 
           if (active) {
+            const persistedForm = readPersistedForm(draftStorageKey);
+            setForm(persistedForm ?? createEmptyForm());
             setState({ status: "ready" });
           }
         } catch (error) {
-          if (!active) {
+          if (!active || isAbortError(error)) {
             return;
           }
 
           if (error instanceof AdminApiError && error.status === 401) {
+            clearAllAdminPostDrafts();
             navigate("/admin/login", {
               replace: true,
               state: { from: location.pathname },
@@ -173,29 +180,29 @@ export default function AdminPostFormPage() {
 
       return () => {
         active = false;
+        controller.abort();
       };
     }
 
     void (async () => {
       try {
-        const post = await fetchAdminPost(id);
+        const post = await fetchAdminPost(id, controller.signal);
 
         if (!active) {
           return;
         }
 
-        if (persistedForm === null) {
-          setForm(toFormValues(post));
-        }
-
+        const persistedForm = readPersistedForm(draftStorageKey);
+        setForm(persistedForm ?? toFormValues(post));
         setSavedPost(post);
         setState({ status: "ready" });
       } catch (error) {
-        if (!active) {
+        if (!active || isAbortError(error)) {
           return;
         }
 
         if (error instanceof AdminApiError && error.status === 401) {
+          clearAllAdminPostDrafts();
           navigate("/admin/login", {
             replace: true,
             state: { from: location.pathname },
@@ -214,16 +221,37 @@ export default function AdminPostFormPage() {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [id, isEditing, location.pathname, navigate, reloadToken]);
+  }, [draftStorageKey, id, isEditing, location.pathname, navigate, reloadToken]);
 
   useEffect(() => {
     if (!shouldPersistDraftRef.current) {
       return;
     }
 
-    writePersistedForm(draftStorageKey, form);
+    const flushDraft = () => {
+      if (shouldPersistDraftRef.current) {
+        writePersistedForm(draftStorageKey, latestFormRef.current);
+      }
+    };
+
+    const timerId = window.setTimeout(flushDraft, 250);
+    window.addEventListener("beforeunload", flushDraft);
+
+    return () => {
+      window.clearTimeout(timerId);
+      window.removeEventListener("beforeunload", flushDraft);
+    };
   }, [draftStorageKey, form]);
+
+  useEffect(() => {
+    return () => {
+      if (shouldPersistDraftRef.current) {
+        writePersistedForm(draftStorageKey, latestFormRef.current);
+      }
+    };
+  }, [draftStorageKey]);
 
   const updateForm = (next: Partial<FormValues>) => {
     shouldPersistDraftRef.current = true;
@@ -262,8 +290,8 @@ export default function AdminPostFormPage() {
         await createAdminPost(payload);
       }
 
-      clearPersistedForm(draftStorageKey);
       shouldPersistDraftRef.current = false;
+      clearPersistedForm(draftStorageKey);
 
       navigate("/admin/posts", {
         replace: true,
@@ -300,8 +328,8 @@ export default function AdminPostFormPage() {
 
     try {
       await deleteAdminPost(id);
-      clearPersistedForm(draftStorageKey);
       shouldPersistDraftRef.current = false;
+      clearPersistedForm(draftStorageKey);
       navigate("/admin/posts", {
         replace: true,
         state: {
@@ -422,11 +450,21 @@ export default function AdminPostFormPage() {
                     className={styles.select}
                     id="post-status"
                     name="status"
-                    onChange={(event) => updateForm({ status: event.target.value === "published" ? "published" : "draft" })}
+                    onChange={(event) =>
+                      updateForm({
+                        status:
+                          event.target.value === "published"
+                            ? "published"
+                            : event.target.value === "archived"
+                              ? "archived"
+                              : "draft",
+                      })
+                    }
                     value={form.status}
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
+                    {form.status === "archived" ? <option value="archived">Archived</option> : null}
                   </select>
                   <span className={styles.helper}>Drafts stay private. Published posts appear on the public blog.</span>
                 </label>

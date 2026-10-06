@@ -13,7 +13,7 @@ import {
   listPublishedBlogRepliesBySlug,
   ReplyError,
 } from "../replies";
-import { getOrCreateVisitorId } from "../visitor";
+import { getOrCreateVisitorId, requirePublicSameOrigin } from "../visitor";
 import { readPositiveIntegerQueryParam, readRouteParam } from "./params";
 
 const blogRouter = Router();
@@ -100,7 +100,7 @@ blogRouter.get("/:slug/replies", async (request: Request, response: Response, ne
   }
 });
 
-blogRouter.post("/:slug/replies", async (request: Request, response: Response, next: NextFunction) => {
+blogRouter.post("/:slug/replies", requirePublicSameOrigin, async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
     assertRateLimit(request, "reply:create", 5, 1000 * 60 * 10);
@@ -112,12 +112,12 @@ blogRouter.post("/:slug/replies", async (request: Request, response: Response, n
   }
 });
 
-blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, response: Response, next: NextFunction) => {
+blogRouter.post("/:slug/replies/:replyId/likes", requirePublicSameOrigin, async (request: Request, response: Response, next: NextFunction) => {
   try {
     const slug = readRouteParam(request.params.slug);
     const replyId = readRouteParam(request.params.replyId);
-    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "reply:like:ip", 60, 1000 * 60 * 60);
+    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "reply:like", 30, 1000 * 60 * 60, visitorId);
     const result = await likePublishedBlogReplyBySlug(slug, replyId, visitorId);
 
@@ -130,8 +130,8 @@ blogRouter.post("/:slug/replies/:replyId/likes", async (request: Request, respon
 async function handleLikeRequest(request: Request, response: Response, next: NextFunction): Promise<void> {
   try {
     const slug = readRouteParam(request.params.slug);
-    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "post:like:ip", 60, 1000 * 60 * 60);
+    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "post:like", 30, 1000 * 60 * 60, visitorId);
     const result = await likePublishedBlogPostBySlug(slug, visitorId);
 
@@ -144,8 +144,8 @@ async function handleLikeRequest(request: Request, response: Response, next: Nex
 async function handleLikeRequestById(request: Request, response: Response, next: NextFunction): Promise<void> {
   try {
     const id = readRouteParam(request.params.id);
-    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "post:like:ip", 60, 1000 * 60 * 60);
+    const visitorId = getOrCreateVisitorId(request, response);
     assertRateLimit(request, "post:like", 30, 1000 * 60 * 60, visitorId);
     const result = await likePublishedBlogPostById(id, visitorId);
 
@@ -155,8 +155,8 @@ async function handleLikeRequestById(request: Request, response: Response, next:
   }
 }
 
-blogRouter.post("/:slug/likes", handleLikeRequest);
-blogRouter.post("/:slug/like", handleLikeRequest);
-blogRouter.post("/id/:id/likes", handleLikeRequestById);
+blogRouter.post("/:slug/likes", requirePublicSameOrigin, handleLikeRequest);
+blogRouter.post("/:slug/like", requirePublicSameOrigin, handleLikeRequest);
+blogRouter.post("/id/:id/likes", requirePublicSameOrigin, handleLikeRequestById);
 
 export default blogRouter;

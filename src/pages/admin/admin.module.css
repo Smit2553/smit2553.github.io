@@ -30,7 +30,7 @@
 
 .eyebrow {
   margin: 0;
-  color: #76abae;
+  color: #3d6568;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -190,15 +190,15 @@
   border: 1px solid transparent;
   border-radius: 5px;
   padding: 0.7rem 1rem;
-  background-color: #76abae;
+  background-color: #35585a;
   color: #eeeeee;
   cursor: pointer;
   text-decoration: none;
   transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.button:hover {
-  opacity: 0.9;
+.button:hover:not(:disabled) {
+  background-color: #222831;
 }
 
 .button:disabled {
@@ -212,7 +212,7 @@
   color: #3d6568;
 }
 
-.buttonSecondary:hover {
+.buttonSecondary:hover:not(:disabled) {
   background-color: rgba(118, 171, 174, 0.08);
   opacity: 1;
 }
@@ -222,7 +222,8 @@
   color: #fff;
 }
 
-.buttonDanger:hover {
+.buttonDanger:hover:not(:disabled) {
+  background-color: #8b4c4c;
   opacity: 0.92;
 }
 
@@ -318,6 +319,11 @@
 .badgePublished {
   background-color: rgba(118, 171, 174, 0.14);
   color: #3d6568;
+}
+
+.badgeArchived {
+  background-color: rgba(34, 40, 49, 0.12);
+  color: #35585a;
 }
 
 .badgeRejected {

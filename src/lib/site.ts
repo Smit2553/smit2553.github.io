@@ -14,12 +14,12 @@ function isSiteConfigResponse(value: unknown): value is SiteConfigResponse {
     && typeof (value as { productionWebsiteUrl?: unknown }).productionWebsiteUrl === "string";
 }
 
-export async function fetchSiteConfig(): Promise<SiteConfig> {
+export async function fetchSiteConfig(signal?: AbortSignal): Promise<SiteConfig> {
   const response = await fetch("/api/site", {
-    cache: "no-store",
     headers: {
       Accept: "application/json",
     },
+    signal,
   });
 
   if (!response.ok) {

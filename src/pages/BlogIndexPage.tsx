@@ -5,6 +5,7 @@ import styles from "../components/blog/blog.module.css";
 import {
   fetchBlogPosts,
   getBlogErrorMessage,
+  isAbortError,
   type BlogListItem,
 } from "../lib/blog";
 
@@ -25,24 +26,28 @@ export default function BlogIndexPage() {
   const [state, setState] = useState<BlogIndexState>({ status: "loading" });
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
 
     void (async () => {
       try {
-        const posts = await fetchBlogPosts();
+        const posts = await fetchBlogPosts(undefined, controller.signal);
 
         if (active) {
           setState({ status: "ready", posts });
         }
       } catch (error) {
-        if (active) {
-          setState({ status: "error", message: getBlogErrorMessage(error) });
+        if (!active || isAbortError(error)) {
+          return;
         }
+
+        setState({ status: "error", message: getBlogErrorMessage(error) });
       }
     })();
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, []);
 

@@ -13,8 +13,9 @@ import {
   deleteExpiredSessions,
   getAdminUserById,
   getAdminUserByUsername,
-  getSessionByTokenHash,
+  getSessionWithAdminUserByTokenHash,
   revokeSessionById,
+  revokeSessionByTokenHash,
   rotateAdminUserCredentials,
   touchSession,
   type AdminUserRow,
@@ -51,6 +52,12 @@ export interface AdminLoginResult {
 
 const passwordSaltHexLength = 32;
 const passwordHashHexLength = 128;
+const sessionTouchThrottleMs = 60_000;
+const validSessionTokenPattern = /^(?:[A-Za-z0-9_-]{43}|[0-9a-fA-F]{64})$/;
+const dummyPasswordSaltHex = crypto.randomBytes(16).toString("hex");
+const dummyPasswordHashHex = crypto
+  .scryptSync("dummy-password-for-timing-mitigation", Buffer.from(dummyPasswordSaltHex, "hex"), 64)
+  .toString("hex");
 
 function derivePasswordKey(password: string, salt: Buffer, length: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -143,12 +150,15 @@ function hashSessionToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-function getCookieValue(request: Request, cookieName: string): string | undefined {
+function getCookieValues(request: Request, cookieName: string): string[] {
   const cookieHeader = request.headers.cookie;
 
   if (!cookieHeader) {
-    return undefined;
+    return [];
   }
+
+  const validMatches: string[] = [];
+  const fallbackMatches: string[] = [];
 
   for (const chunk of cookieHeader.split(";")) {
     const trimmed = chunk.trim();
@@ -165,15 +175,26 @@ function getCookieValue(request: Request, cookieName: string): string | undefine
     }
 
     const rawValue = trimmed.slice(equalsIndex + 1);
+    let decodedValue: string;
 
     try {
-      return decodeURIComponent(rawValue);
+      decodedValue = decodeURIComponent(rawValue);
     } catch {
-      return rawValue;
+      decodedValue = rawValue;
+    }
+
+    if (validSessionTokenPattern.test(decodedValue)) {
+      validMatches.push(decodedValue);
+    } else if (decodedValue.length > 0) {
+      fallbackMatches.push(decodedValue);
     }
   }
 
-  return undefined;
+  return [...validMatches, ...fallbackMatches].slice(0, 5);
+}
+
+function getCookieValue(request: Request, cookieName: string): string | undefined {
+  return getCookieValues(request, cookieName)[0];
 }
 
 export function setAdminSessionCookie(response: Response, token: string): void {
@@ -232,10 +253,16 @@ export async function initializeAdminAuth(): Promise<AdminUserRow> {
       disabledAt: null,
     });
 
-    return (await getAdminUserById(PRIMARY_ADMIN_USER_ID)) as AdminUserRow;
+    const created = await getAdminUserById(PRIMARY_ADMIN_USER_ID);
+
+    if (!created) {
+      throw new Error("Failed to initialize primary admin user.");
+    }
+
+    return created;
   }
 
-  const passwordMatches = existing.disabled_at === null && existing.username === adminUsername
+  const passwordMatches = existing.username === adminUsername
     && await verifyPassword(adminPassword, existing.password_salt, existing.password_hash);
 
   if (passwordMatches) {
@@ -252,10 +279,16 @@ export async function initializeAdminAuth(): Promise<AdminUserRow> {
     createdAt: existing.created_at,
     updatedAt: now,
     lastLoginAt: existing.last_login_at,
-    disabledAt: null,
+    disabledAt: existing.disabled_at,
   }, now);
 
-  return (await getAdminUserById(PRIMARY_ADMIN_USER_ID)) as AdminUserRow;
+  const updated = await getAdminUserById(PRIMARY_ADMIN_USER_ID);
+
+  if (!updated) {
+    throw new Error("Failed to reload primary admin user after credential rotation.");
+  }
+
+  return updated;
 }
 
 export async function loginAdmin(username: string, password: string): Promise<AdminLoginResult | null> {
@@ -265,18 +298,19 @@ export async function loginAdmin(username: string, password: string): Promise<Ad
     return null;
   }
 
-  const now = nowIso();
-  await deleteExpiredSessions(now);
-
   const user = await getAdminUserByUsername(normalizedUsername);
 
   if (!user || user.disabled_at !== null) {
+    await verifyPassword(password, dummyPasswordSaltHex, dummyPasswordHashHex);
     return null;
   }
 
   if (!await verifyPassword(password, user.password_salt, user.password_hash)) {
     return null;
   }
+
+  const now = nowIso();
+  await deleteExpiredSessions(now);
 
   const token = createSessionToken();
   const tokenHash = hashSessionToken(token);
@@ -306,44 +340,56 @@ export async function loginAdmin(username: string, password: string): Promise<Ad
 }
 
 export async function resolveAdminAuth(request: Request): Promise<AdminAuthContext | null> {
-  const token = getCookieValue(request, adminSessionCookieName);
+  const candidateTokens = getCookieValues(request, adminSessionCookieName);
 
-  if (!token) {
+  if (candidateTokens.length === 0) {
     return null;
   }
 
   const now = nowIso();
-  const session = await getSessionByTokenHash(hashSessionToken(token));
 
-  if (!session) {
-    return null;
+  for (const token of candidateTokens) {
+    const resolved = await getSessionWithAdminUserByTokenHash(hashSessionToken(token));
+
+    if (!resolved) {
+      continue;
+    }
+
+    const { session, user } = resolved;
+
+    if (session.revoked_at !== null) {
+      continue;
+    }
+
+    if (session.expires_at <= now) {
+      await revokeSessionById(session.id, now);
+      continue;
+    }
+
+    if (!user || user.disabled_at !== null) {
+      await revokeSessionById(session.id, now);
+      continue;
+    }
+
+    const lastSeenMs = Date.parse(session.last_seen_at);
+    const shouldTouch = Number.isNaN(lastSeenMs) || Date.parse(now) - lastSeenMs >= sessionTouchThrottleMs;
+
+    if (shouldTouch) {
+      await touchSession(session.id, now);
+    }
+
+    return {
+      user,
+      session: shouldTouch
+        ? {
+          ...session,
+          last_seen_at: now,
+        }
+        : session,
+    };
   }
 
-  if (session.revoked_at !== null) {
-    return null;
-  }
-
-  if (session.expires_at <= now) {
-    await revokeSessionById(session.id, now);
-    return null;
-  }
-
-  const user = await getAdminUserById(session.admin_user_id);
-
-  if (!user || user.disabled_at !== null) {
-    await revokeSessionById(session.id, now);
-    return null;
-  }
-
-  await touchSession(session.id, now);
-
-  return {
-    user,
-    session: {
-      ...session,
-      last_seen_at: now,
-    },
-  };
+  return null;
 }
 
 export async function requireAdminAuth(request: Request, response: Response, next: NextFunction): Promise<void> {
@@ -367,10 +413,9 @@ export async function logoutAdminSession(request: Request, response: Response): 
   const token = getCookieValue(request, adminSessionCookieName);
 
   if (token) {
-    const session = await getSessionByTokenHash(hashSessionToken(token));
-
-    if (session) {
-      await revokeSessionById(session.id, nowIso());
+    const now = nowIso();
+    for (const candidate of getCookieValues(request, adminSessionCookieName)) {
+      await revokeSessionByTokenHash(hashSessionToken(candidate), now);
     }
   }
 

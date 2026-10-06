@@ -1,13 +1,16 @@
 import crypto from "node:crypto";
 import {
-  createBlogLike,
-  deleteBlogLike,
-  getPublishedBlogPostById,
   getPublishedBlogPostBySlug,
-  getPublishedBlogPostLikeCountByPostId,
+  getPublishedBlogPostIdById,
+  getPublishedBlogPostIdBySlug,
+  getPublishedBlogPostMetaBySlug,
   getPublishedBlogPosts,
+  getSitemapPublishedPosts,
+  toggleBlogLike,
   type PublishedBlogPostDetailRow,
+  type PublishedBlogPostMetaRow,
   type PublishedBlogPostSummaryRow,
+  type SitemapPublishedPostRow,
 } from "./storage";
 import { normalizeNullableText, normalizeText } from "./normalize";
 
@@ -41,6 +44,20 @@ export interface PublicBlogPostDetail extends PublicBlogPostSummary {
   content: string;
 }
 
+export interface PublicBlogPostMeta {
+  slug: string;
+  title: string;
+  summary: string | null;
+  coverImageUrl: string | null;
+  excerpt: string;
+}
+
+export interface SitemapPublishedBlogPost {
+  slug: string;
+  publishedAt: string;
+  updatedAt: string;
+}
+
 export interface PublicBlogLikeResult {
   ok: true;
   liked: boolean;
@@ -59,16 +76,25 @@ function normalizePostId(postId: string): string | null {
   return normalized.length === 0 ? null : normalized;
 }
 
+function toExcerpt(summary: string): string {
+  return summary.length === 0
+    ? "No preview available yet."
+    : summary.length <= 180
+      ? summary
+      : `${summary.slice(0, 177).trimEnd()}...`;
+}
+
 function toPublicBlogPostSummary(row: PublishedBlogPostSummaryRow): PublicBlogPostSummary {
-  const summary = normalizeNullableText(row.summary) ?? "";
+  const normalizedSummary = normalizeNullableText(row.summary);
+  const summary = normalizedSummary ?? "";
 
   return {
     id: row.id,
     slug: normalizeText(row.slug),
     title: normalizeText(row.title),
-    summary: normalizeNullableText(row.summary),
+    summary: normalizedSummary,
     coverImageUrl: normalizeNullableText(row.cover_image_url),
-    excerpt: summary.length === 0 ? "No preview available yet." : summary.length <= 180 ? summary : `${summary.slice(0, 177).trimEnd()}...`,
+    excerpt: toExcerpt(summary),
     publishedAt: row.published_at ?? row.created_at,
     updatedAt: row.updated_at,
     likeCount: row.like_count,
@@ -82,25 +108,48 @@ function toPublicBlogPostDetail(row: PublishedBlogPostDetailRow): PublicBlogPost
   };
 }
 
-async function createLikeResult(post: PublishedBlogPostSummaryRow, visitorKey: string): Promise<PublicBlogLikeResult> {
-  const created = await createBlogLike({
+function toPublicBlogPostMeta(row: PublishedBlogPostMetaRow): PublicBlogPostMeta {
+  const normalizedSummary = normalizeNullableText(row.summary);
+  const summary = normalizedSummary ?? "";
+
+  return {
+    slug: normalizeText(row.slug),
+    title: normalizeText(row.title),
+    summary: normalizedSummary,
+    coverImageUrl: normalizeNullableText(row.cover_image_url),
+    excerpt: toExcerpt(summary),
+  };
+}
+
+function toSitemapPublishedBlogPost(row: SitemapPublishedPostRow): SitemapPublishedBlogPost {
+  return {
+    slug: normalizeText(row.slug),
+    publishedAt: row.published_at ?? row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function createLikeResult(postId: string, visitorKey: string): Promise<PublicBlogLikeResult> {
+  const { liked, likeCount } = await toggleBlogLike({
     id: crypto.randomUUID(),
-    postId: post.id,
+    postId,
     visitorKey,
     createdAt: nowIso(),
   });
 
-  const liked = created ? true : !(await deleteBlogLike(post.id, visitorKey));
-
   return {
     ok: true,
     liked,
-    likeCount: await getPublishedBlogPostLikeCountByPostId(post.id),
+    likeCount,
   };
 }
 
 export async function listPublishedBlogPosts(limit?: number): Promise<PublicBlogPostSummary[]> {
   return (await getPublishedBlogPosts(limit)).map(toPublicBlogPostSummary);
+}
+
+export async function listSitemapPublishedPosts(limit?: number): Promise<SitemapPublishedBlogPost[]> {
+  return (await getSitemapPublishedPosts(limit)).map(toSitemapPublishedBlogPost);
 }
 
 export async function readPublishedBlogPostBySlug(slug: string): Promise<PublicBlogPostDetail | null> {
@@ -119,6 +168,22 @@ export async function readPublishedBlogPostBySlug(slug: string): Promise<PublicB
   return toPublicBlogPostDetail(post);
 }
 
+export async function readPublishedBlogPostMetaBySlug(slug: string): Promise<PublicBlogPostMeta | null> {
+  const normalizedSlug = normalizeSlug(slug);
+
+  if (!normalizedSlug) {
+    return null;
+  }
+
+  const post = await getPublishedBlogPostMetaBySlug(normalizedSlug);
+
+  if (!post) {
+    return null;
+  }
+
+  return toPublicBlogPostMeta(post);
+}
+
 export async function likePublishedBlogPostBySlug(slug: string, visitorKey: string): Promise<PublicBlogLikeResult> {
   const normalizedSlug = normalizeSlug(slug);
 
@@ -126,13 +191,13 @@ export async function likePublishedBlogPostBySlug(slug: string, visitorKey: stri
     throw new BlogError(400, "Slug is required.");
   }
 
-  const post = await getPublishedBlogPostBySlug(normalizedSlug);
+  const post = await getPublishedBlogPostIdBySlug(normalizedSlug);
 
   if (!post) {
     throw new BlogError(404, "Post not found.");
   }
 
-  return createLikeResult(post, visitorKey);
+  return createLikeResult(post.id, visitorKey);
 }
 
 export async function likePublishedBlogPostById(id: string, visitorKey: string): Promise<PublicBlogLikeResult> {
@@ -142,11 +207,11 @@ export async function likePublishedBlogPostById(id: string, visitorKey: string):
     throw new BlogError(400, "Post id is required.");
   }
 
-  const post = await getPublishedBlogPostById(normalizedId);
+  const post = await getPublishedBlogPostIdById(normalizedId);
 
   if (!post) {
     throw new BlogError(404, "Post not found.");
   }
 
-  return createLikeResult(post, visitorKey);
+  return createLikeResult(post.id, visitorKey);
 }

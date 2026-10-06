@@ -28,18 +28,34 @@ export function getClientIp(request: Request): string {
 }
 
 function cleanupExpiredBuckets(now: number): void {
-  if (!cleanupIterator) {
-    cleanupIterator = buckets.entries();
+  if (buckets.size === 0) {
+    cleanupIterator = null;
+    return;
   }
 
-  for (let scanned = 0; scanned < cleanupBatchSize; scanned += 1) {
+  const maxScans = buckets.size >= maxBucketCount ? buckets.size : cleanupBatchSize;
+  let scanned = 0;
+  let wrapped = false;
+
+  while (scanned < maxScans) {
+    if (!cleanupIterator) {
+      cleanupIterator = buckets.entries();
+    }
+
     const entry = cleanupIterator.next();
 
     if (entry.done) {
       cleanupIterator = null;
-      return;
+
+      if (wrapped || buckets.size < maxBucketCount) {
+        return;
+      }
+
+      wrapped = true;
+      continue;
     }
 
+    scanned += 1;
     const [key, bucket] = entry.value;
 
     if (bucket.resetAt <= now) {
@@ -63,7 +79,10 @@ export function assertRateLimit(request: Request, action: string, limit: number,
     }
 
     if (buckets.size >= maxBucketCount) {
-      throw new RateLimitError("Too many requests. Please try again later.");
+      const oldestKey = buckets.keys().next().value;
+      if (oldestKey !== undefined) {
+        buckets.delete(oldestKey);
+      }
     }
 
     buckets.set(key, { count: 1, resetAt: now + windowMs });

@@ -14,22 +14,24 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
 
     void (async () => {
       try {
-        await fetchAdminHealth();
+        await fetchAdminHealth(controller.signal);
 
         if (active) {
           navigate(returnPath, { replace: true });
         }
       } catch {
-        // Stay on the login form if the session check fails.
+        // Stay on the login form if the session check fails or is aborted.
       }
     })();
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [navigate, returnPath]);
 

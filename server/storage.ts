@@ -1,6 +1,12 @@
 import postgres, { type Sql } from "postgres";
 import { blogDbSchema, databaseUrl, productionMode } from "./config";
-import { databaseConnectionOptions, validateMigrationState, validateRequiredConstraints, validateRequiredSchema } from "./database-runtime";
+import {
+  databaseConnectionOptions,
+  requireSchemaName,
+  validateMigrationState,
+  validateRequiredConstraints,
+  validateRequiredSchema,
+} from "./database-runtime";
 
 type UnsafeParameters = NonNullable<Parameters<Sql["unsafe"]>[1]>;
 
@@ -23,6 +29,11 @@ export interface SessionRow {
   last_seen_at: string;
   expires_at: string;
   revoked_at: string | null;
+}
+
+export interface SessionWithAdminUserRow {
+  session: SessionRow;
+  user: AdminUserRow | null;
 }
 
 export interface AdminUserSeed {
@@ -117,6 +128,20 @@ export interface PublishedBlogPostDetailRow extends PublishedBlogPostSummaryRow 
   content: string;
 }
 
+export interface PublishedBlogPostMetaRow {
+  slug: string;
+  title: string;
+  summary: string | null;
+  cover_image_url: string | null;
+}
+
+export interface SitemapPublishedPostRow {
+  slug: string;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AdminPostRow {
   id: string;
   slug: string;
@@ -129,6 +154,8 @@ export interface AdminPostRow {
   created_at: string;
   updated_at: string;
 }
+
+export type AdminPostSummaryRow = Omit<AdminPostRow, "content">;
 
 export interface AdminPostSeed {
   id: string;
@@ -151,16 +178,8 @@ function requireDatabaseUrl(): string {
   return databaseUrl;
 }
 
-function requireSchemaName(): string {
-  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(blogDbSchema)) {
-    throw new Error(`Invalid BLOG_DB_SCHEMA: ${blogDbSchema}`);
-  }
-
-  return blogDbSchema;
-}
-
 function tableName(name: string): string {
-  return `"${requireSchemaName()}"."${name}"`;
+  return `"${requireSchemaName(blogDbSchema)}"."${name}"`;
 }
 
 function getSql(): Sql {
@@ -195,6 +214,12 @@ export async function initializeStorage(): Promise<void> {
   if (productionMode) {
     await validateMigrationState(getSql(), blogDbSchema);
   }
+
+  await Promise.all([
+    run(`CREATE INDEX IF NOT EXISTS idx_posts_published_sort ON ${tableName("posts")} (COALESCE(published_at, created_at) DESC, created_at DESC) WHERE status = 'published'`),
+    run(`CREATE INDEX IF NOT EXISTS idx_posts_admin_sort ON ${tableName("posts")} (updated_at DESC, created_at DESC, id DESC)`),
+    run(`CREATE INDEX IF NOT EXISTS idx_replies_post_status_created ON ${tableName("replies")} (post_id, status, created_at ASC, id ASC)`),
+  ]);
 }
 
 export async function checkStorageReadiness(): Promise<void> {
@@ -334,6 +359,77 @@ export function getSessionByTokenHash(tokenHash: string): Promise<SessionRow | u
   return queryOne<SessionRow>(`SELECT * FROM ${tableName("sessions")} WHERE token_hash = $1 LIMIT 1`, [tokenHash]);
 }
 
+type RawSessionWithAdminUserRow = SessionRow & {
+  user_id: string | null;
+  user_username: string | null;
+  user_password_hash: string | null;
+  user_password_salt: string | null;
+  user_created_at: string | null;
+  user_updated_at: string | null;
+  user_last_login_at: string | null;
+  user_disabled_at: string | null;
+};
+
+export async function getSessionWithAdminUserByTokenHash(tokenHash: string): Promise<SessionWithAdminUserRow | undefined> {
+  const row = await queryOne<RawSessionWithAdminUserRow>(
+    `SELECT
+      s.id,
+      s.admin_user_id,
+      s.token_hash,
+      s.created_at,
+      s.last_seen_at,
+      s.expires_at,
+      s.revoked_at,
+      u.id AS user_id,
+      u.username AS user_username,
+      u.password_hash AS user_password_hash,
+      u.password_salt AS user_password_salt,
+      u.created_at AS user_created_at,
+      u.updated_at AS user_updated_at,
+      u.last_login_at AS user_last_login_at,
+      u.disabled_at AS user_disabled_at
+    FROM ${tableName("sessions")} AS s
+    LEFT JOIN ${tableName("admin_users")} AS u ON u.id = s.admin_user_id
+    WHERE s.token_hash = $1
+    LIMIT 1`,
+    [tokenHash],
+  );
+
+  if (!row) {
+    return undefined;
+  }
+
+  const session: SessionRow = {
+    id: row.id,
+    admin_user_id: row.admin_user_id,
+    token_hash: row.token_hash,
+    created_at: row.created_at,
+    last_seen_at: row.last_seen_at,
+    expires_at: row.expires_at,
+    revoked_at: row.revoked_at,
+  };
+
+  const user: AdminUserRow | null = row.user_id !== null
+    && row.user_username !== null
+    && row.user_password_hash !== null
+    && row.user_password_salt !== null
+    && row.user_created_at !== null
+    && row.user_updated_at !== null
+    ? {
+      id: row.user_id,
+      username: row.user_username,
+      password_hash: row.user_password_hash,
+      password_salt: row.user_password_salt,
+      created_at: row.user_created_at,
+      updated_at: row.user_updated_at,
+      last_login_at: row.user_last_login_at,
+      disabled_at: row.user_disabled_at,
+    }
+    : null;
+
+  return { session, user };
+}
+
 export function touchSession(sessionId: string, lastSeenAt: string): Promise<void> {
   return run(`UPDATE ${tableName("sessions")} SET last_seen_at = $1 WHERE id = $2`, [lastSeenAt, sessionId]);
 }
@@ -342,8 +438,8 @@ export function revokeSessionById(sessionId: string, revokedAt: string): Promise
   return run(`UPDATE ${tableName("sessions")} SET revoked_at = $1 WHERE id = $2 AND revoked_at IS NULL`, [revokedAt, sessionId]);
 }
 
-export function revokeSessionsByAdminUserId(adminUserId: string, revokedAt: string): Promise<void> {
-  return run(`UPDATE ${tableName("sessions")} SET revoked_at = $1 WHERE admin_user_id = $2 AND revoked_at IS NULL`, [revokedAt, adminUserId]);
+export function revokeSessionByTokenHash(tokenHash: string, revokedAt: string): Promise<void> {
+  return run(`UPDATE ${tableName("sessions")} SET revoked_at = $1 WHERE token_hash = $2 AND revoked_at IS NULL`, [revokedAt, tokenHash]);
 }
 
 export function deleteExpiredSessions(nowIso: string): Promise<void> {
@@ -372,6 +468,23 @@ export function getPublishedBlogPosts(limit?: number): Promise<PublishedBlogPost
   return queryAll<PublishedBlogPostSummaryRow>(sql);
 }
 
+export function getSitemapPublishedPosts(limit?: number): Promise<SitemapPublishedPostRow[]> {
+  const sql = `SELECT
+      slug,
+      published_at,
+      created_at,
+      updated_at
+    FROM ${tableName("posts")}
+    WHERE status = 'published'
+    ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC`;
+
+  if (typeof limit === "number") {
+    return queryAll<SitemapPublishedPostRow>(`${sql} LIMIT $1`, [limit]);
+  }
+
+  return queryAll<SitemapPublishedPostRow>(sql);
+}
+
 export function getPublishedBlogPostBySlug(slug: string): Promise<PublishedBlogPostDetailRow | undefined> {
   return queryOne<PublishedBlogPostDetailRow>(
     `SELECT
@@ -392,6 +505,30 @@ export function getPublishedBlogPostBySlug(slug: string): Promise<PublishedBlogP
   );
 }
 
+export function getPublishedBlogPostIdBySlug(slug: string): Promise<{ id: string } | undefined> {
+  return queryOne<{ id: string }>(
+    `SELECT id
+    FROM ${tableName("posts")}
+    WHERE slug = $1 AND status = 'published'
+    LIMIT 1`,
+    [slug],
+  );
+}
+
+export function getPublishedBlogPostMetaBySlug(slug: string): Promise<PublishedBlogPostMetaRow | undefined> {
+  return queryOne<PublishedBlogPostMetaRow>(
+    `SELECT
+      slug,
+      title,
+      summary,
+      cover_image_url
+    FROM ${tableName("posts")}
+    WHERE slug = $1 AND status = 'published'
+    LIMIT 1`,
+    [slug],
+  );
+}
+
 export function getPublishedBlogPostById(id: string): Promise<PublishedBlogPostDetailRow | undefined> {
   return queryOne<PublishedBlogPostDetailRow>(
     `SELECT
@@ -406,6 +543,16 @@ export function getPublishedBlogPostById(id: string): Promise<PublishedBlogPostD
       updated_at,
       (SELECT COUNT(*)::int FROM ${tableName("likes")} WHERE likes.post_id = posts.id) AS like_count
     FROM ${tableName("posts")} AS posts
+    WHERE id = $1 AND status = 'published'
+    LIMIT 1`,
+    [id],
+  );
+}
+
+export function getPublishedBlogPostIdById(id: string): Promise<{ id: string } | undefined> {
+  return queryOne<{ id: string }>(
+    `SELECT id
+    FROM ${tableName("posts")}
     WHERE id = $1 AND status = 'published'
     LIMIT 1`,
     [id],
@@ -445,6 +592,34 @@ export async function deleteBlogLike(postId: string, visitorKey: string): Promis
   return result.length > 0;
 }
 
+export async function toggleBlogLike(seed: BlogLikeSeed): Promise<{ liked: boolean; likeCount: number }> {
+  const row = await queryOne<{ liked: boolean; like_count: number }>(
+    `WITH deleted AS (
+      DELETE FROM ${tableName("likes")}
+      WHERE post_id = $2 AND visitor_key = $3
+      RETURNING id
+    ),
+    inserted AS (
+      INSERT INTO ${tableName("likes")} (id, post_id, visitor_key, created_at)
+      SELECT $1, $2, $3, $4
+      WHERE NOT EXISTS (SELECT 1 FROM deleted)
+      ON CONFLICT (post_id, visitor_key) DO NOTHING
+      RETURNING id
+    )
+    SELECT
+      EXISTS (SELECT 1 FROM inserted) AS liked,
+      ((SELECT COUNT(*)::int FROM ${tableName("likes")} WHERE post_id = $2)
+        + (SELECT COUNT(*)::int FROM inserted)
+        - (SELECT COUNT(*)::int FROM deleted)) AS like_count`,
+    [seed.id, seed.postId, seed.visitorKey, seed.createdAt],
+  );
+
+  return {
+    liked: row?.liked ?? false,
+    likeCount: row?.like_count ?? 0,
+  };
+}
+
 export async function createReplyLike(seed: ReplyLikeSeed): Promise<boolean> {
   const result = await queryAll<{ id: string }>(
     `INSERT INTO ${tableName("reply_likes")} (
@@ -470,6 +645,34 @@ export async function deleteReplyLike(replyId: string, visitorKey: string): Prom
   );
 
   return result.length > 0;
+}
+
+export async function toggleReplyLike(seed: ReplyLikeSeed): Promise<{ liked: boolean; likeCount: number }> {
+  const row = await queryOne<{ liked: boolean; like_count: number }>(
+    `WITH deleted AS (
+      DELETE FROM ${tableName("reply_likes")}
+      WHERE reply_id = $2 AND visitor_key = $3
+      RETURNING id
+    ),
+    inserted AS (
+      INSERT INTO ${tableName("reply_likes")} (id, reply_id, visitor_key, created_at)
+      SELECT $1, $2, $3, $4
+      WHERE NOT EXISTS (SELECT 1 FROM deleted)
+      ON CONFLICT (reply_id, visitor_key) DO NOTHING
+      RETURNING id
+    )
+    SELECT
+      EXISTS (SELECT 1 FROM inserted) AS liked,
+      ((SELECT COUNT(*)::int FROM ${tableName("reply_likes")} WHERE reply_id = $2)
+        + (SELECT COUNT(*)::int FROM inserted)
+        - (SELECT COUNT(*)::int FROM deleted)) AS like_count`,
+    [seed.id, seed.replyId, seed.visitorKey, seed.createdAt],
+  );
+
+  return {
+    liked: row?.liked ?? false,
+    likeCount: row?.like_count ?? 0,
+  };
 }
 
 export async function getReplyLikeCountByReplyId(replyId: string): Promise<number> {
@@ -553,6 +756,44 @@ export function getRepliesByPostIdAndStatus(postId: string, status: string): Pro
   );
 }
 
+export function getApprovedRepliesWithLikesByPostId(postId: string): Promise<(ReplyRow & { like_count: number })[]> {
+  return queryAll<ReplyRow & { like_count: number }>(
+    `SELECT
+      replies.id,
+      replies.post_id,
+      replies.parent_reply_id,
+      replies.author_name,
+      replies.author_email,
+      replies.body,
+      replies.status,
+      replies.created_at,
+      replies.updated_at,
+      COALESCE(rl.like_count, 0)::int AS like_count
+    FROM ${tableName("replies")} AS replies
+    LEFT JOIN (
+      SELECT reply_id, COUNT(*)::int AS like_count
+      FROM ${tableName("reply_likes")}
+      GROUP BY reply_id
+    ) AS rl ON rl.reply_id = replies.id
+    WHERE replies.post_id = $1
+      AND replies.status = 'approved'
+      AND (
+        replies.parent_reply_id IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM ${tableName("replies")} AS parent
+          WHERE parent.id = replies.parent_reply_id
+            AND parent.post_id = $1
+            AND parent.status = 'approved'
+            AND parent.parent_reply_id IS NULL
+        )
+      )
+    ORDER BY replies.created_at ASC, replies.id ASC
+    LIMIT 500`,
+    [postId],
+  );
+}
+
 export function getAdminReplies(): Promise<ReplyWithPostRow[]> {
   return queryAll<ReplyWithPostRow>(
     `SELECT
@@ -619,14 +860,13 @@ export function deleteReplyById(id: string): Promise<void> {
   return run(`DELETE FROM ${tableName("replies")} WHERE id = $1`, [id]);
 }
 
-export function getAdminPosts(): Promise<AdminPostRow[]> {
-  return queryAll<AdminPostRow>(`SELECT
+export function getAdminPosts(): Promise<AdminPostSummaryRow[]> {
+  return queryAll<AdminPostSummaryRow>(`SELECT
       id,
       slug,
       title,
       summary,
       cover_image_url,
-      content,
       status,
       published_at,
       created_at,
@@ -731,6 +971,11 @@ export function updateAdminPost(seed: AdminPostSeed): Promise<void> {
   );
 }
 
-export function deleteAdminPostById(id: string): Promise<void> {
-  return run(`DELETE FROM ${tableName("posts")} WHERE id = $1`, [id]);
+export async function deleteAdminPostById(id: string): Promise<boolean> {
+  const rows = await queryAll<{ id: string }>(
+    `DELETE FROM ${tableName("posts")} WHERE id = $1 RETURNING id`,
+    [id],
+  );
+
+  return rows.length > 0;
 }

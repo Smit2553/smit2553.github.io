@@ -5,6 +5,16 @@ const apiPort = Number(process.env.API_PORT) || 3001;
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "framer-motion": ["framer-motion"],
+          markdown: ["react-markdown", "remark-gfm", "rehype-sanitize"],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/api": {

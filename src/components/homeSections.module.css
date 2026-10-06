@@ -196,13 +196,6 @@
   letter-spacing: 0.08em;
 }
 
-.timelineDuration {
-  margin: 0;
-  color: #555;
-  font-size: 0.88rem;
-  text-align: right;
-}
-
 .timelineBody {
   display: flex;
   align-items: flex-start;
@@ -328,12 +321,6 @@
   text-transform: uppercase;
 }
 
-.educationSummary {
-  margin: 0;
-  color: #666;
-  line-height: 1.65;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .timelineCard:hover {
     transform: translateY(-4px);
@@ -412,7 +399,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (max-height: 700px), (prefers-reduced-motion: reduce) {
   .experienceScrollTrack {
     height: auto;
   }
@@ -426,6 +413,8 @@
   .experienceStickyInner {
     height: auto;
     overflow: visible;
+    transform: none !important;
+    border-radius: 0 !important;
   }
 
   .experienceSectionInner {
@@ -443,6 +432,7 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
     width: 100%;
     padding-inline: 0;
+    transform: none !important;
   }
 
   .timelineItem {
@@ -452,7 +442,9 @@
   .timelineAxisLine {
     display: none;
   }
+}
 
+@media (prefers-reduced-motion: reduce) {
   .timelineRail,
   .timelineCard,
   .timelineLogo,

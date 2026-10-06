@@ -1,4 +1,4 @@
-export type AdminPostStatus = "draft" | "published";
+export type AdminPostStatus = "draft" | "published" | "archived";
 
 export type AdminReplyStatus = "pending" | "approved" | "rejected";
 
@@ -66,17 +66,108 @@ export class AdminApiError extends Error {
   }
 }
 
-type AdminPostsResponse = {
-  posts: AdminPostSummary[];
-};
+const adminDraftStoragePrefix = "admin-post-editor:";
 
-type AdminPostResponse = {
-  post: AdminPost;
-};
+export function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
 
-type AdminRepliesResponse = {
-  replies: AdminReply[];
-};
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isAdminPostStatus(value: unknown): value is AdminPostStatus {
+  return value === "draft" || value === "published" || value === "archived";
+}
+
+function isAdminReplyStatus(value: unknown): value is AdminReplyStatus {
+  return value === "pending" || value === "approved" || value === "rejected";
+}
+
+function isAdminPostSummary(value: unknown): value is AdminPostSummary {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    isNullableString(value.summary) &&
+    isNullableString(value.coverImageUrl) &&
+    isAdminPostStatus(value.status) &&
+    isNullableString(value.publishedAt) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isAdminPost(value: unknown): value is AdminPost {
+  return isAdminPostSummary(value) && typeof (value as unknown as Record<string, unknown>).content === "string";
+}
+
+function isAdminReplyPost(value: unknown): value is AdminReplyPost {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    isNullableString(value.summary) &&
+    typeof value.status === "string" &&
+    isNullableString(value.publishedAt) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isAdminReply(value: unknown): value is AdminReply {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    isAdminReplyPost(value.post) &&
+    isNullableString(value.parentReplyId) &&
+    typeof value.authorName === "string" &&
+    isNullableString(value.authorEmail) &&
+    typeof value.body === "string" &&
+    isAdminReplyStatus(value.status) &&
+    isRecord(value.moderation) &&
+    typeof value.moderation.flagged === "boolean" &&
+    Array.isArray(value.moderation.reasons) &&
+    value.moderation.reasons.every((reason) => typeof reason === "string") &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+export function clearAllAdminPostDrafts(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const keysToRemove: string[] = [];
+
+    for (let index = 0; index < window.sessionStorage.length; index += 1) {
+      const key = window.sessionStorage.key(index);
+
+      if (key && key.startsWith(adminDraftStoragePrefix)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    for (const key of keysToRemove) {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore sessionStorage errors during draft cleanup.
+  }
+}
 
 async function readResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
@@ -148,8 +239,8 @@ async function requestAdmin(path: string, init: RequestInit = {}, fallbackMessag
   return body;
 }
 
-export async function fetchAdminHealth(): Promise<void> {
-  await requestAdmin("/api/admin/health", { method: "GET" }, "Unable to verify admin session.");
+export async function fetchAdminHealth(signal?: AbortSignal): Promise<void> {
+  await requestAdmin("/api/admin/health", { method: "GET", signal }, "Unable to verify admin session.");
 }
 
 export async function loginAdmin(username: string, password: string): Promise<void> {
@@ -164,21 +255,33 @@ export async function loginAdmin(username: string, password: string): Promise<vo
 }
 
 export async function logoutAdmin(): Promise<void> {
-  await requestAdmin("/api/admin/logout", { method: "POST" }, "Unable to sign out.");
+  try {
+    await requestAdmin("/api/admin/logout", { method: "POST" }, "Unable to sign out.");
+  } finally {
+    clearAllAdminPostDrafts();
+  }
 }
 
-export async function fetchAdminPosts(): Promise<AdminPostSummary[]> {
-  const response = (await requestAdmin("/api/admin/posts", { method: "GET" }, "Unable to load posts.")) as AdminPostsResponse;
+export async function fetchAdminPosts(signal?: AbortSignal): Promise<AdminPostSummary[]> {
+  const response = await requestAdmin("/api/admin/posts", { method: "GET", signal }, "Unable to load posts.");
+
+  if (!isRecord(response) || !Array.isArray(response.posts) || !response.posts.every(isAdminPostSummary)) {
+    throw new AdminApiError(502, "Received an invalid admin posts response.");
+  }
 
   return response.posts;
 }
 
-export async function fetchAdminPost(id: string): Promise<AdminPost> {
-  const response = (await requestAdmin(
+export async function fetchAdminPost(id: string, signal?: AbortSignal): Promise<AdminPost> {
+  const response = await requestAdmin(
     `/api/admin/posts/${encodeURIComponent(id)}`,
-    { method: "GET" },
+    { method: "GET", signal },
     "Unable to load the post.",
-  )) as AdminPostResponse;
+  );
+
+  if (!isRecord(response) || !isAdminPost(response.post)) {
+    throw new AdminApiError(502, "Received an invalid admin post response.");
+  }
 
   return response.post;
 }
@@ -213,12 +316,16 @@ export async function deleteAdminPost(id: string): Promise<void> {
   );
 }
 
-export async function fetchAdminReplies(): Promise<AdminReply[]> {
-  const response = (await requestAdmin(
+export async function fetchAdminReplies(signal?: AbortSignal): Promise<AdminReply[]> {
+  const response = await requestAdmin(
     "/api/admin/replies",
-    { method: "GET" },
+    { method: "GET", signal },
     "Unable to load replies.",
-  )) as AdminRepliesResponse;
+  );
+
+  if (!isRecord(response) || !Array.isArray(response.replies) || !response.replies.every(isAdminReply)) {
+    throw new AdminApiError(502, "Received an invalid admin replies response.");
+  }
 
   return response.replies;
 }

@@ -258,24 +258,26 @@ export async function validateRequiredSchema(sql: Pick<Sql, "unsafe">, schemaVal
 
 export async function validateRequiredConstraints(sql: Pick<Sql, "unsafe">, schemaValue: string): Promise<void> {
   const schema = requireSchemaName(schemaValue);
-  const constraintRows = await sql.unsafe<ConstraintRow[]>(
-    `SELECT table_name, constraint_name, constraint_type
-      FROM information_schema.table_constraints
-      WHERE constraint_schema = $1`,
-    [schema],
-  );
-  const referentialRows = await sql.unsafe<ReferentialRuleRow[]>(
-    `SELECT constraint_name, delete_rule
-      FROM information_schema.referential_constraints
-      WHERE constraint_schema = $1`,
-    [schema],
-  );
-  const checkRows = await sql.unsafe<CheckConstraintRow[]>(
-    `SELECT constraint_name, check_clause
-      FROM information_schema.check_constraints
-      WHERE constraint_schema = $1`,
-    [schema],
-  );
+  const [constraintRows, referentialRows, checkRows] = await Promise.all([
+    sql.unsafe<ConstraintRow[]>(
+      `SELECT table_name, constraint_name, constraint_type
+        FROM information_schema.table_constraints
+        WHERE constraint_schema = $1`,
+      [schema],
+    ),
+    sql.unsafe<ReferentialRuleRow[]>(
+      `SELECT constraint_name, delete_rule
+        FROM information_schema.referential_constraints
+        WHERE constraint_schema = $1`,
+      [schema],
+    ),
+    sql.unsafe<CheckConstraintRow[]>(
+      `SELECT constraint_name, check_clause
+        FROM information_schema.check_constraints
+        WHERE constraint_schema = $1`,
+      [schema],
+    ),
+  ]);
   const constraints = new Map(constraintRows.map((row) => [
     `${row.table_name}.${row.constraint_name}`,
     row.constraint_type,

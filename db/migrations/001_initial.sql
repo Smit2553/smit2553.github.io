@@ -87,3 +87,6 @@ CREATE INDEX IF NOT EXISTS idx_replies_parent_reply_id ON __BLOG_DB_SCHEMA__.rep
 CREATE INDEX IF NOT EXISTS idx_reply_likes_reply_id ON __BLOG_DB_SCHEMA__.reply_likes(reply_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_admin_user_id ON __BLOG_DB_SCHEMA__.sessions(admin_user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON __BLOG_DB_SCHEMA__.sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_posts_published_sort ON __BLOG_DB_SCHEMA__.posts (COALESCE(published_at, created_at) DESC, created_at DESC) WHERE status = 'published';
+CREATE INDEX IF NOT EXISTS idx_posts_admin_sort ON __BLOG_DB_SCHEMA__.posts (updated_at DESC, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_replies_post_status_created ON __BLOG_DB_SCHEMA__.replies (post_id, status, created_at ASC, id ASC);

@@ -7,9 +7,12 @@ import MarkdownContent from "../components/blog/MarkdownContent";
 import styles from "../components/blog/blog.module.css";
 import {
   fetchBlogPost,
+  fetchBlogReplies,
   formatBlogDate,
   getBlogErrorMessage,
+  isAbortError,
   type BlogPost,
+  type BlogReply,
 } from "../lib/blog";
 
 type BlogPostState =
@@ -19,6 +22,7 @@ type BlogPostState =
   | {
       status: "ready";
       post: BlogPost;
+      repliesPromise: Promise<BlogReply[]>;
     }
   | {
       status: "notFound";
@@ -38,12 +42,16 @@ export default function BlogPostPage() {
       return;
     }
 
+    const controller = new AbortController();
     let active = true;
     setState({ status: "loading" });
 
+    const repliesPromise = fetchBlogReplies(slug, controller.signal);
+    repliesPromise.catch(() => undefined);
+
     void (async () => {
       try {
-        const post = await fetchBlogPost(slug);
+        const post = await fetchBlogPost(slug, controller.signal);
 
         if (!active) {
           return;
@@ -54,16 +62,19 @@ export default function BlogPostPage() {
           return;
         }
 
-        setState({ status: "ready", post });
+        setState({ status: "ready", post, repliesPromise });
       } catch (error) {
-        if (active) {
-          setState({ status: "error", message: getBlogErrorMessage(error) });
+        if (!active || isAbortError(error)) {
+          return;
         }
+
+        setState({ status: "error", message: getBlogErrorMessage(error) });
       }
     })();
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, [slug]);
 
@@ -151,7 +162,7 @@ export default function BlogPostPage() {
     );
   }
 
-  const { post } = state;
+  const { post, repliesPromise } = state;
 
   return (
     <>
@@ -206,7 +217,11 @@ export default function BlogPostPage() {
             <MarkdownContent content={post.content} />
           </div>
 
-          <BlogRepliesSection postTitle={post.title} slug={post.slug} />
+          <BlogRepliesSection
+            initialRepliesPromise={repliesPromise}
+            postTitle={post.title}
+            slug={post.slug}
+          />
         </article>
       </main>
     </>

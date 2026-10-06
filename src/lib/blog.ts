@@ -56,10 +56,12 @@ type BlogReplySubmissionResponse = {
 };
 
 const likedPostStorageKey = "blog:liked-post-ids";
-const likedPostCookieName = "blog-liked-post-ids";
+const legacyLikedPostCookieName = "blog-liked-post-ids";
 const likedReplyStorageKey = "blog:liked-reply-ids";
-const likedReplyCookieName = "blog-liked-reply-ids";
-const cookieMaxAgeSeconds = 60 * 60 * 24 * 365;
+const legacyLikedReplyCookieName = "blog-liked-reply-ids";
+
+let likedPostIdsCache: Set<string> | null = null;
+let likedReplyIdsCache: Set<string> | null = null;
 
 export class BlogApiError extends Error {
   status: number;
@@ -69,6 +71,67 @@ export class BlogApiError extends Error {
     this.name = "BlogApiError";
     this.status = status;
   }
+}
+
+export function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isBlogListItem(value: unknown): value is BlogListItem {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.slug === "string" &&
+    typeof value.title === "string" &&
+    isNullableString(value.summary) &&
+    isNullableString(value.coverImageUrl) &&
+    typeof value.excerpt === "string" &&
+    typeof value.publishedAt === "string" &&
+    typeof value.updatedAt === "string" &&
+    typeof value.likeCount === "number" &&
+    Number.isFinite(value.likeCount)
+  );
+}
+
+function isBlogPost(value: unknown): value is BlogPost {
+  return isBlogListItem(value) && typeof (value as Record<string, unknown>).content === "string";
+}
+
+function isBlogReply(value: unknown): value is BlogReply {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    isNullableString(value.parentReplyId) &&
+    typeof value.authorName === "string" &&
+    typeof value.body === "string" &&
+    typeof value.likeCount === "number" &&
+    Number.isFinite(value.likeCount) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isBlogLikeResult(value: unknown): value is BlogLikeResult {
+  return (
+    isRecord(value) &&
+    value.ok === true &&
+    typeof value.liked === "boolean" &&
+    typeof value.likeCount === "number" &&
+    Number.isFinite(value.likeCount)
+  );
 }
 
 async function requestJson<T>(
@@ -85,7 +148,7 @@ async function requestJson<T>(
 
   const response = await fetch(path, {
     ...init,
-    cache: "no-store",
+    cache: init?.method && init.method !== "GET" ? "no-store" : "no-cache",
     headers,
   });
 
@@ -161,192 +224,207 @@ function readCookieValue(cookieName: string): string | null {
   return null;
 }
 
-function writeCookieValue(cookieName: string, value: string): void {
+function clearLegacyCookie(cookieName: string): void {
   if (typeof document === "undefined") {
     return;
   }
 
-  document.cookie = `${encodeURIComponent(cookieName)}=${encodeURIComponent(value)}; path=/; max-age=${cookieMaxAgeSeconds}; samesite=lax`;
+  document.cookie = `${encodeURIComponent(cookieName)}=; path=/; Max-Age=0; samesite=lax`;
 }
 
-function readPersistedValue(storageKey: string, cookieName: string): string | null {
+function hydrateLikedIdSet(storageKey: string, legacyCookieName: string): Set<string> {
   if (typeof window === "undefined") {
-    return null;
+    return new Set<string>();
   }
+
+  let storedValue: string | null = null;
 
   try {
-    const storedValue = window.localStorage.getItem(storageKey);
-
-    if (storedValue !== null) {
-      return storedValue;
-    }
+    storedValue = window.localStorage.getItem(storageKey);
   } catch {
-    // Fall through to the cookie fallback.
+    storedValue = null;
   }
 
-  const cookieValue = readCookieValue(cookieName);
+  const cookieValue = readCookieValue(legacyCookieName);
 
-  if (cookieValue !== null) {
+  if (storedValue === null && cookieValue !== null) {
+    storedValue = cookieValue;
+
     try {
       window.localStorage.setItem(storageKey, cookieValue);
     } catch {
-      // Ignore storage failures and keep using the cookie.
+      // Ignore storage write failures when migrating legacy cookies.
     }
   }
 
-  return cookieValue;
-}
-
-function writePersistedValue(storageKey: string, cookieName: string, value: string): void {
-  if (typeof window === "undefined") {
-    return;
+  if (cookieValue !== null) {
+    clearLegacyCookie(legacyCookieName);
   }
-
-  try {
-    window.localStorage.setItem(storageKey, value);
-  } catch {
-    // Keep the cookie fallback in sync even if localStorage is unavailable.
-  }
-
-  writeCookieValue(cookieName, value);
-}
-
-function readPersistedIdList(storageKey: string, cookieName: string): string[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const storedValue = readPersistedValue(storageKey, cookieName);
 
   if (!storedValue) {
-    return [];
+    return new Set<string>();
   }
 
   try {
     const parsed = JSON.parse(storedValue) as unknown;
 
-    if (!Array.isArray(parsed) || !parsed.every((postId) => typeof postId === "string")) {
-      return [];
+    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === "string")) {
+      return new Set<string>();
     }
 
-    return parsed.map((postId) => postId.trim()).filter((postId) => postId.length > 0);
+    return new Set(
+      parsed.map((item) => item.trim()).filter((item) => item.length > 0),
+    );
   } catch {
-    return [];
+    return new Set<string>();
   }
 }
 
-function writePersistedIdList(storageKey: string, cookieName: string, ids: string[]): void {
+function persistLikedIdSet(storageKey: string, ids: Set<string>): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  writePersistedValue(storageKey, cookieName, JSON.stringify(ids));
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(Array.from(ids)));
+  } catch {
+    // Keep the in-memory Set updated even if localStorage is unavailable.
+  }
 }
 
-function readLikedBlogPostIds(): string[] {
-  return readPersistedIdList(likedPostStorageKey, likedPostCookieName);
+function getLikedPostIds(): Set<string> {
+  if (likedPostIdsCache === null) {
+    likedPostIdsCache = hydrateLikedIdSet(likedPostStorageKey, legacyLikedPostCookieName);
+  }
+
+  return likedPostIdsCache;
 }
 
-function writeLikedBlogPostIds(postIds: string[]): void {
-  writePersistedIdList(likedPostStorageKey, likedPostCookieName, postIds);
+function getLikedReplyIds(): Set<string> {
+  if (likedReplyIdsCache === null) {
+    likedReplyIdsCache = hydrateLikedIdSet(likedReplyStorageKey, legacyLikedReplyCookieName);
+  }
+
+  return likedReplyIdsCache;
 }
 
-function readLikedBlogReplyIds(): string[] {
-  return readPersistedIdList(likedReplyStorageKey, likedReplyCookieName);
-}
-
-function writeLikedBlogReplyIds(replyIds: string[]): void {
-  writePersistedIdList(likedReplyStorageKey, likedReplyCookieName, replyIds);
-}
-
-function normalizePostId(postId: string): string {
-  return postId.trim();
+function normalizeId(value: string): string {
+  return value.trim();
 }
 
 export function hasLikedBlogPost(postId: string): boolean {
-  const normalizedPostId = normalizePostId(postId);
+  const normalizedPostId = normalizeId(postId);
 
   if (normalizedPostId.length === 0) {
     return false;
   }
 
-  return readLikedBlogPostIds().includes(normalizedPostId);
+  return getLikedPostIds().has(normalizedPostId);
 }
 
 export function markBlogPostLiked(postId: string): void {
-  const normalizedPostId = normalizePostId(postId);
+  const normalizedPostId = normalizeId(postId);
 
   if (normalizedPostId.length === 0) {
     return;
   }
 
-  const likedPostIds = readLikedBlogPostIds();
+  const likedPostIds = getLikedPostIds();
 
-  if (likedPostIds.includes(normalizedPostId)) {
+  if (likedPostIds.has(normalizedPostId)) {
     return;
   }
 
-  writeLikedBlogPostIds([...likedPostIds, normalizedPostId]);
+  likedPostIds.add(normalizedPostId);
+  persistLikedIdSet(likedPostStorageKey, likedPostIds);
 }
 
 export function unmarkBlogPostLiked(postId: string): void {
-  const normalizedPostId = normalizePostId(postId);
+  const normalizedPostId = normalizeId(postId);
 
   if (normalizedPostId.length === 0) {
     return;
   }
 
-  writeLikedBlogPostIds(readLikedBlogPostIds().filter((likedPostId) => likedPostId !== normalizedPostId));
+  const likedPostIds = getLikedPostIds();
+
+  if (!likedPostIds.delete(normalizedPostId)) {
+    return;
+  }
+
+  persistLikedIdSet(likedPostStorageKey, likedPostIds);
 }
 
 export function hasLikedBlogReply(replyId: string): boolean {
-  const normalizedReplyId = normalizePostId(replyId);
+  const normalizedReplyId = normalizeId(replyId);
 
   if (normalizedReplyId.length === 0) {
     return false;
   }
 
-  return readLikedBlogReplyIds().includes(normalizedReplyId);
+  return getLikedReplyIds().has(normalizedReplyId);
 }
 
 export function markBlogReplyLiked(replyId: string): void {
-  const normalizedReplyId = normalizePostId(replyId);
+  const normalizedReplyId = normalizeId(replyId);
 
   if (normalizedReplyId.length === 0) {
     return;
   }
 
-  const likedReplyIds = readLikedBlogReplyIds();
+  const likedReplyIds = getLikedReplyIds();
 
-  if (likedReplyIds.includes(normalizedReplyId)) {
+  if (likedReplyIds.has(normalizedReplyId)) {
     return;
   }
 
-  writeLikedBlogReplyIds([...likedReplyIds, normalizedReplyId]);
+  likedReplyIds.add(normalizedReplyId);
+  persistLikedIdSet(likedReplyStorageKey, likedReplyIds);
 }
 
 export function unmarkBlogReplyLiked(replyId: string): void {
-  const normalizedReplyId = normalizePostId(replyId);
+  const normalizedReplyId = normalizeId(replyId);
 
   if (normalizedReplyId.length === 0) {
     return;
   }
 
-  writeLikedBlogReplyIds(readLikedBlogReplyIds().filter((likedReplyId) => likedReplyId !== normalizedReplyId));
+  const likedReplyIds = getLikedReplyIds();
+
+  if (!likedReplyIds.delete(normalizedReplyId)) {
+    return;
+  }
+
+  persistLikedIdSet(likedReplyStorageKey, likedReplyIds);
 }
 
-export async function fetchBlogPosts(limit?: number): Promise<BlogListItem[]> {
+export async function fetchBlogPosts(
+  limit?: number,
+  signal?: AbortSignal,
+): Promise<BlogListItem[]> {
   const query = typeof limit === "number" ? `?limit=${limit}` : "";
-  const response = await requestJson<BlogListResponse>(`/api/posts${query}`);
+  const response = await requestJson<BlogListResponse>(`/api/posts${query}`, { signal });
+
+  if (!isRecord(response) || !Array.isArray(response.posts) || !response.posts.every(isBlogListItem)) {
+    throw new BlogApiError(502, "Received an invalid blog posts response.");
+  }
 
   return response.posts;
 }
 
-export async function fetchBlogPost(slug: string): Promise<BlogPost | null> {
+export async function fetchBlogPost(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<BlogPost | null> {
   try {
     const response = await requestJson<BlogPostResponse>(
       `/api/posts/${encodeURIComponent(slug)}`,
+      { signal },
     );
+
+    if (!isRecord(response) || !isBlogPost(response.post)) {
+      throw new BlogApiError(502, "Received an invalid blog post response.");
+    }
 
     return response.post;
   } catch (error) {
@@ -358,18 +436,25 @@ export async function fetchBlogPost(slug: string): Promise<BlogPost | null> {
   }
 }
 
-export async function fetchBlogReplies(slug: string): Promise<BlogReply[]> {
+export async function fetchBlogReplies(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<BlogReply[]> {
   const response = await requestJson<BlogRepliesResponse>(
     `/api/posts/${encodeURIComponent(slug)}/replies`,
-    {},
+    { signal },
     "Unable to load replies.",
   );
+
+  if (!isRecord(response) || !Array.isArray(response.replies) || !response.replies.every(isBlogReply)) {
+    throw new BlogApiError(502, "Received an invalid replies response.");
+  }
 
   return response.replies;
 }
 
 export async function submitBlogReply(slug: string, reply: BlogReplySubmission): Promise<void> {
-  await requestJson<BlogReplySubmissionResponse>(
+  const response = await requestJson<BlogReplySubmissionResponse>(
     `/api/posts/${encodeURIComponent(slug)}/replies`,
     {
       method: "POST",
@@ -377,35 +462,48 @@ export async function submitBlogReply(slug: string, reply: BlogReplySubmission):
     },
     "Unable to submit reply.",
   );
+
+  if (!isRecord(response) || response.ok !== true) {
+    throw new BlogApiError(502, "Unable to submit reply.");
+  }
 }
 
-async function requestBlogLike(path: string): Promise<BlogLikeResult> {
+export const createBlogReply = submitBlogReply;
+
+async function requestBlogLike(
+  path: string,
+  fallbackErrorMessage = "Unable to like blog post.",
+): Promise<BlogLikeResult> {
   const response = await requestJson<BlogLikeResponse>(
     path,
     {
       method: "POST",
     },
-    "Unable to like blog post.",
+    fallbackErrorMessage,
   );
 
-  return response;
-}
+  if (!isBlogLikeResult(response)) {
+    throw new BlogApiError(502, fallbackErrorMessage);
+  }
 
-export async function likeBlogPost(
-  slug: string,
-): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/likes`);
+  return response;
 }
 
 export async function likeBlogPostById(
   postId: string,
 ): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/id/${encodeURIComponent(postId)}/likes`);
+  return requestBlogLike(
+    `/api/posts/id/${encodeURIComponent(postId)}/likes`,
+    "Unable to like blog post.",
+  );
 }
 
 export async function likeBlogReply(
   slug: string,
   replyId: string,
 ): Promise<BlogLikeResult> {
-  return requestBlogLike(`/api/posts/${encodeURIComponent(slug)}/replies/${encodeURIComponent(replyId)}/likes`);
+  return requestBlogLike(
+    `/api/posts/${encodeURIComponent(slug)}/replies/${encodeURIComponent(replyId)}/likes`,
+    "Unable to like reply.",
+  );
 }

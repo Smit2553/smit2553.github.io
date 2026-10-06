@@ -1,8 +1,17 @@
-import { useEffect, useId, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   fetchBlogReplies,
   formatBlogDate,
   getBlogErrorMessage,
+  isAbortError,
   submitBlogReply,
   type BlogReply,
 } from "../../lib/blog";
@@ -12,6 +21,7 @@ import styles from "./blog.module.css";
 type BlogRepliesSectionProps = {
   slug: string;
   postTitle: string;
+  initialRepliesPromise?: Promise<BlogReply[]> | null;
 };
 
 type RepliesState =
@@ -43,11 +53,17 @@ type SubmissionState =
       message: string;
     };
 
-export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSectionProps) {
+export default function BlogRepliesSection({
+  initialRepliesPromise,
+  postTitle,
+  slug,
+}: BlogRepliesSectionProps) {
   const sectionId = useId();
   const authorNameInputId = `${sectionId}-author-name`;
   const replyInputId = `${sectionId}-reply-body`;
   const websiteInputId = `${sectionId}-website`;
+  const authorNameInputRef = useRef<HTMLInputElement | null>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [repliesState, setRepliesState] = useState<RepliesState>({ status: "loading" });
   const [submissionState, setSubmissionState] = useState<SubmissionState>({ status: "idle" });
   const [authorName, setAuthorName] = useState("");
@@ -56,6 +72,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
   const [replyTarget, setReplyTarget] = useState<BlogReply | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
 
     setRepliesState({ status: "loading" });
@@ -67,22 +84,25 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
 
     void (async () => {
       try {
-        const replies = await fetchBlogReplies(slug);
+        const replies = await (initialRepliesPromise ?? fetchBlogReplies(slug, controller.signal));
 
         if (active) {
           setRepliesState({ status: "ready", replies });
         }
       } catch (error) {
-        if (active) {
-          setRepliesState({ status: "error", message: getBlogErrorMessage(error) });
+        if (!active || isAbortError(error)) {
+          return;
         }
+
+        setRepliesState({ status: "error", message: getBlogErrorMessage(error) });
       }
     })();
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [slug]);
+  }, [initialRepliesPromise, slug]);
 
   function clearSubmissionFeedback(): void {
     setSubmissionState((current) => (current.status === "submitting" ? current : { status: "idle" }));
@@ -101,6 +121,15 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
   function handleWebsiteChange(event: ChangeEvent<HTMLInputElement>): void {
     setWebsite(event.target.value);
     clearSubmissionFeedback();
+  }
+
+  function handleSelectReplyTarget(reply: BlogReply): void {
+    setReplyTarget(reply);
+
+    const targetInput =
+      authorName.trim().length === 0 ? authorNameInputRef.current : replyInputRef.current;
+
+    targetInput?.focus();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -141,12 +170,30 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
     }
   }
 
-  const replies = repliesState.status === "ready" ? repliesState.replies : [];
-  const rootReplies = replies.filter((reply) => reply.parentReplyId === null);
+  const { rootReplies, childrenByParentId } = useMemo(() => {
+    const roots: BlogReply[] = [];
+    const byParent = new Map<string, BlogReply[]>();
 
-  function getChildReplies(parentReplyId: string): BlogReply[] {
-    return replies.filter((reply) => reply.parentReplyId === parentReplyId);
-  }
+    if (repliesState.status !== "ready") {
+      return { rootReplies: roots, childrenByParentId: byParent };
+    }
+
+    for (const reply of repliesState.replies) {
+      if (reply.parentReplyId === null) {
+        roots.push(reply);
+      } else {
+        const existing = byParent.get(reply.parentReplyId);
+
+        if (existing) {
+          existing.push(reply);
+        } else {
+          byParent.set(reply.parentReplyId, [reply]);
+        }
+      }
+    }
+
+    return { rootReplies: roots, childrenByParentId: byParent };
+  }, [repliesState]);
 
   return (
     <section className={styles.replySection} aria-labelledby={`${sectionId}-title`}>
@@ -186,7 +233,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
             </div>
           )}
 
-          <div className={styles.field}>
+          <div className={styles.field} aria-hidden="true">
             <label className={styles.honeypotLabel} htmlFor={websiteInputId}>
               Website
             </label>
@@ -207,6 +254,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
               Your name
             </label>
             <input
+              ref={authorNameInputRef}
               className={styles.input}
               id={authorNameInputId}
               maxLength={80}
@@ -224,6 +272,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
               {replyTarget ? "Subreply" : "Reply"}
             </label>
             <textarea
+              ref={replyInputRef}
               className={styles.textarea}
               id={replyInputId}
               maxLength={4000}
@@ -271,7 +320,7 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
       {repliesState.status === "ready" && rootReplies.length > 0 && (
         <div className={styles.replyList}>
           {rootReplies.map((reply) => {
-            const childReplies = getChildReplies(reply.id);
+            const childReplies = childrenByParentId.get(reply.id) ?? [];
 
             return (
               <article className={styles.replyThread} key={reply.id}>
@@ -285,7 +334,11 @@ export default function BlogRepliesSection({ postTitle, slug }: BlogRepliesSecti
                   <p className={styles.replyBody}>{reply.body}</p>
                   <div className={`${styles.formActions} ${styles.replyActions}`}>
                     <BlogReplyLikeButton initialLikeCount={reply.likeCount} replyId={reply.id} slug={slug} title={`reply from ${reply.authorName}`} />
-                    <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={() => setReplyTarget(reply)} type="button">
+                    <button
+                      className={`${styles.button} ${styles.buttonSecondary}`}
+                      onClick={() => handleSelectReplyTarget(reply)}
+                      type="button"
+                    >
                       Reply
                     </button>
                   </div>

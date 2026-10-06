@@ -156,17 +156,27 @@ export function ExperienceTimelineSection() {
   const borderRadius = useTransform(enterProgress, [0, 1], [40, 0]);
 
   useEffect(() => {
+    const rail = carouselRef.current;
+    const wrapper = rail?.parentElement ?? null;
+
     const measure = () => {
       if (carouselRef.current && carouselRef.current.parentElement) {
         const railWidth = carouselRef.current.scrollWidth;
         const wrapperWidth = carouselRef.current.parentElement.clientWidth;
-        setScrollWidth(Math.max(0, railWidth - wrapperWidth));
+        const next = Math.max(0, railWidth - wrapperWidth);
+        setScrollWidth((prev) => (prev === next ? prev : next));
       }
     };
-    
+
     measure();
-    setTimeout(measure, 100);
-    setTimeout(measure, 500);
+
+    if (typeof ResizeObserver !== "undefined" && rail && wrapper) {
+      const observer = new ResizeObserver(measure);
+      observer.observe(rail);
+      observer.observe(wrapper);
+      return () => observer.disconnect();
+    }
+
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
@@ -217,6 +227,7 @@ export function ExperienceTimelineSection() {
                         <img
                           alt={`${entry.company} logo`}
                           className={styles.timelineLogo}
+                          decoding="async"
                           height={48}
                           loading="lazy"
                           src={entry.logoUrl}

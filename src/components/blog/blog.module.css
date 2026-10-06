@@ -49,7 +49,7 @@
 
 .eyebrow {
   margin: 0;
-  color: #76abae;
+  color: #3d6568;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -74,7 +74,6 @@
 }
 
 .pageLead,
-.sectionLead,
 .articleSummary,
 .statusText,
 .emptyText,
@@ -86,12 +85,6 @@
 .pageLead,
 .articleSummary {
   max-width: 70ch;
-}
-
-.sectionLead {
-  margin: 0 auto;
-  max-width: 70ch;
-  text-align: center;
 }
 
 .pageActions,
@@ -112,24 +105,22 @@
   justify-content: center;
 }
 
-.buttonLink,
-.backLink {
+.buttonLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: #76abae;
+  background-color: #35585a;
   color: #eeeeee;
   border-radius: 5px;
   padding: 0.65rem 1rem;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
   width: fit-content;
 }
 
-.buttonLink:hover,
-.backLink:hover {
-  opacity: 0.85;
+.buttonLink:hover {
+  background-color: #222831;
 }
 
 .cardGrid {
@@ -240,7 +231,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-top: auto;
-  color: #76abae;
+  color: #3d6568;
   font-weight: 700;
   flex-wrap: wrap;
 }
@@ -307,7 +298,7 @@
 
 .likeButtonLiked .likeButtonCount {
   background: rgba(118, 171, 174, 0.18);
-  color: #35585b;
+  color: #35585a;
 }
 
 .likeButtonCount {
@@ -320,6 +311,12 @@
   color: #222831;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
+}
+
+.likeError {
+  color: #8b4c4c;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .postCardArrow {
@@ -466,7 +463,7 @@
   border: 1px solid transparent;
   border-radius: 5px;
   padding: 0.7rem 1rem;
-  background-color: #76abae;
+  background-color: #35585a;
   color: #eeeeee;
   cursor: pointer;
   font-weight: 700;
@@ -474,13 +471,23 @@
   transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.button:hover {
-  opacity: 0.9;
+.button:hover:not(:disabled) {
+  background-color: #222831;
 }
 
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.buttonSecondary {
+  border-color: rgba(118, 171, 174, 0.28);
+  background-color: transparent;
+  color: #3d6568;
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  background-color: rgba(118, 171, 174, 0.08);
 }
 
 .notice {
@@ -602,7 +609,7 @@
 }
 
 .markdown a {
-  color: #76abae;
+  color: #3d6568;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }

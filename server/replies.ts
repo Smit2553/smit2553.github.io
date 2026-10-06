@@ -1,16 +1,13 @@
 import crypto from "node:crypto";
 import { getReplySpamBlockReason, moderateReply, type ReplyModeration } from "./reply-moderation";
 import {
-  createReplyLike,
-  deleteReplyLike,
   deleteReplyById as deleteReplyRow,
   getAdminReplies as getAdminReplyRows,
-  getPublishedBlogPostBySlug,
-  getReplyLikeCountByReplyId,
-  getReplyLikeCountsByReplyIds,
+  getApprovedRepliesWithLikesByPostId,
+  getPublishedBlogPostIdBySlug,
   getReplyById,
-  getRepliesByPostIdAndStatus,
   insertReply as insertReplyRow,
+  toggleReplyLike,
   updateReplyStatus as updateReplyRowStatus,
   type ReplyRow,
   type ReplySeed,
@@ -19,6 +16,11 @@ import {
 import { normalizeNullableText, normalizeText } from "./normalize";
 
 export type ReplyStatus = "pending" | "approved" | "rejected";
+type ReplyModerationResult = ReplyModeration;
+
+const moderationCache = new Map<string, ReplyModerationResult>();
+const maxModerationCacheEntries = 2_000;
+const asciiControlCharacterPattern = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 
 export interface PublicReply {
   id: string;
@@ -143,15 +145,24 @@ function readRequiredPlainTextField(value: unknown, fieldName: string, maximumLe
     throw new ReplyError(400, `${fieldName} is required.`);
   }
 
-  if (value.trim().length === 0) {
+  if (asciiControlCharacterPattern.test(value)) {
+    throw new ReplyError(400, `${fieldName} must not contain control characters.`);
+  }
+
+  const normalized = value
+    .replace(/\r\n?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (normalized.length === 0) {
     throw new ReplyError(400, `${fieldName} is required.`);
   }
 
-  if (value.length > maximumLength) {
+  if (normalized.length > maximumLength) {
     throw new ReplyError(400, `${fieldName} must not exceed ${maximumLength} characters.`);
   }
 
-  return value;
+  return normalized;
 }
 
 function readOptionalTextField(value: unknown, fieldName: string, maximumLength: number): string | null {
@@ -206,6 +217,33 @@ function toPublicReply(row: ReplyRow, likeCount = 0): PublicReply {
   };
 }
 
+function getCachedReplyModeration(
+  rowId: string,
+  updatedAt: string,
+  authorName: string,
+  authorEmail: string | null,
+  body: string,
+): ReplyModerationResult {
+  const cacheKey = `${rowId}:${updatedAt}`;
+  const cached = moderationCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const result = moderateReply(authorName, authorEmail, body);
+
+  if (moderationCache.size >= maxModerationCacheEntries) {
+    const oldestKey = moderationCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      moderationCache.delete(oldestKey);
+    }
+  }
+
+  moderationCache.set(cacheKey, result);
+  return result;
+}
+
 function toAdminReply(row: ReplyWithPostRow): AdminReply {
   const authorName = normalizeText(row.author_name);
   const authorEmail = normalizeNullableText(row.author_email);
@@ -227,15 +265,15 @@ function toAdminReply(row: ReplyWithPostRow): AdminReply {
     authorEmail,
     body: row.body,
     status: toReplyStatus(row.status),
-    moderation: moderateReply(authorName, authorEmail, row.body),
+    moderation: getCachedReplyModeration(row.id, row.updated_at, authorName, authorEmail, row.body),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-async function getPublishedReplyPost(slug: string) {
+async function getPublishedReplyPost(slug: string): Promise<{ id: string }> {
   const normalizedSlug = normalizeSlug(slug);
-  const post = await getPublishedBlogPostBySlug(normalizedSlug);
+  const post = await getPublishedBlogPostIdBySlug(normalizedSlug);
 
   if (!post) {
     throw new ReplyError(404, "Post not found.");
@@ -246,20 +284,9 @@ async function getPublishedReplyPost(slug: string) {
 
 export async function listPublishedBlogRepliesBySlug(slug: string): Promise<PublicReply[]> {
   const post = await getPublishedReplyPost(slug);
-  const approvedReplies = await getRepliesByPostIdAndStatus(post.id, "approved");
-  const approvedReplyLookup = new Map(approvedReplies.map((reply) => [reply.id, reply]));
-  const visibleReplies = approvedReplies.filter((reply) => {
-    if (reply.parent_reply_id === null) {
-      return true;
-    }
+  const approvedReplies = await getApprovedRepliesWithLikesByPostId(post.id);
 
-    const parentReply = approvedReplyLookup.get(reply.parent_reply_id);
-
-    return parentReply !== undefined && parentReply.parent_reply_id === null;
-  });
-  const likeCounts = await getReplyLikeCountsByReplyIds(visibleReplies.map((reply) => reply.id));
-
-  return visibleReplies.map((reply) => toPublicReply(reply, likeCounts.get(reply.id) ?? 0));
+  return approvedReplies.map((reply) => toPublicReply(reply, reply.like_count));
 }
 
 export async function createPublishedBlogReplyBySlug(slug: string, body: unknown): Promise<PublicReply> {
@@ -345,19 +372,17 @@ export async function likePublishedBlogReplyBySlug(slug: string, replyId: string
     }
   }
 
-  const created = await createReplyLike({
+  const { liked, likeCount } = await toggleReplyLike({
     id: crypto.randomUUID(),
     replyId: reply.id,
     visitorKey,
     createdAt: nowIso(),
   });
 
-  const liked = created ? true : !(await deleteReplyLike(reply.id, visitorKey));
-
   return {
     ok: true,
     liked,
-    likeCount: await getReplyLikeCountByReplyId(reply.id),
+    likeCount,
   };
 }
 

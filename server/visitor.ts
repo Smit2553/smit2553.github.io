@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import type { Request, Response } from "express";
-import { productionMode, visitorCookieName, visitorCookieSecret } from "./config";
+import type { NextFunction, Request, Response } from "express";
+import { productionMode, publicOrigin, visitorCookieName, visitorCookieSecret } from "./config";
 
 const visitorIdPattern = /^[0-9a-f]{32}$/;
 const visitorCookieMaxAgeMs = 1000 * 60 * 60 * 24 * 365;
@@ -9,12 +9,14 @@ function signVisitorId(visitorId: string): string {
   return crypto.createHmac("sha256", visitorCookieSecret).update(visitorId).digest("base64url");
 }
 
-function readCookieValue(request: Request, cookieName: string): string | undefined {
+function readCookieValues(request: Request, cookieName: string): string[] {
   const cookieHeader = request.headers.cookie;
 
   if (!cookieHeader) {
-    return undefined;
+    return [];
   }
+
+  const values: string[] = [];
 
   for (const chunk of cookieHeader.split(";")) {
     const trimmed = chunk.trim();
@@ -24,17 +26,19 @@ function readCookieValue(request: Request, cookieName: string): string | undefin
       continue;
     }
 
+    const rawValue = trimmed.slice(equalsIndex + 1);
+
     try {
-      return decodeURIComponent(trimmed.slice(equalsIndex + 1));
+      values.push(decodeURIComponent(rawValue));
     } catch {
-      return trimmed.slice(equalsIndex + 1);
+      values.push(rawValue);
     }
   }
 
-  return undefined;
+  return values;
 }
 
-function parseVisitorCookie(value: string | undefined): string | null {
+export function verifySignedVisitorCookie(value: string | undefined): string | null {
   if (!value) {
     return null;
   }
@@ -71,11 +75,66 @@ function setVisitorCookie(response: Response, visitorId: string): void {
   });
 }
 
-export function getOrCreateVisitorId(request: Request, response: Response): string {
-  const existingVisitorId = parseVisitorCookie(readCookieValue(request, visitorCookieName));
+function expectedRequestOrigin(request: Request): string | null {
+  if (publicOrigin) {
+    return publicOrigin;
+  }
 
-  if (existingVisitorId) {
-    return existingVisitorId;
+  const host = request.get("host");
+
+  return host ? `${request.protocol}://${host}` : null;
+}
+
+function headerOrigin(headerValue: string): string | null {
+  try {
+    return new URL(headerValue).origin;
+  } catch {
+    return null;
+  }
+}
+
+export function requirePublicSameOrigin(request: Request, response: Response, next: NextFunction): void {
+  if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") {
+    next();
+    return;
+  }
+
+  const secFetchSite = request.get("sec-fetch-site")?.trim().toLowerCase();
+
+  if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") {
+    response.status(403).json({
+      error: "Cross-origin requests are not allowed.",
+      message: "Cross-origin requests are not allowed.",
+    });
+    return;
+  }
+
+  const originHeader = request.get("origin");
+  const refererHeader = request.get("referer");
+
+  if (originHeader || refererHeader) {
+    const expectedOrigin = expectedRequestOrigin(request);
+    const suppliedOrigin = originHeader ? headerOrigin(originHeader) : refererHeader ? headerOrigin(refererHeader) : null;
+
+    if (!expectedOrigin || suppliedOrigin !== expectedOrigin) {
+      response.status(403).json({
+        error: "Cross-origin requests are not allowed.",
+        message: "Cross-origin requests are not allowed.",
+      });
+      return;
+    }
+  }
+
+  next();
+}
+
+export function getOrCreateVisitorId(request: Request, response: Response): string {
+  for (const cookieValue of readCookieValues(request, visitorCookieName)) {
+    const existingVisitorId = verifySignedVisitorCookie(cookieValue);
+
+    if (existingVisitorId) {
+      return existingVisitorId;
+    }
   }
 
   const visitorId = crypto.randomBytes(16).toString("hex");

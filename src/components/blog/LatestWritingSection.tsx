@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   fetchBlogPosts,
   getBlogErrorMessage,
+  isAbortError,
   type BlogListItem,
 } from "../../lib/blog";
 import BlogPreviewCard from "./BlogPreviewCard";
@@ -25,35 +26,39 @@ export default function LatestWritingSection() {
   const [state, setState] = useState<WritingState>({ status: "loading" });
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
 
     void (async () => {
       try {
-        const posts = await fetchBlogPosts(3);
+        const posts = await fetchBlogPosts(3, controller.signal);
 
         if (active) {
           setState({ status: "ready", posts });
         }
       } catch (error) {
-        if (active) {
-          setState({ status: "error", message: getBlogErrorMessage(error) });
+        if (!active || isAbortError(error)) {
+          return;
         }
+
+        setState({ status: "error", message: getBlogErrorMessage(error) });
       }
     })();
 
     return () => {
       active = false;
+      controller.abort();
     };
   }, []);
 
   return (
-    <section className={styles.section}>
+    <section aria-labelledby="writing" className={styles.section}>
       <div className={styles.sectionInner}>
         <div className={styles.sectionHeader}>
           <p className={styles.eyebrow}>Writing</p>
-          <h1 className={styles.sectionTitle} id="writing">
+          <h2 className={styles.sectionTitle} id="writing">
             Latest Writing
-          </h1>
+          </h2>
         </div>
 
         {state.status === "loading" && (

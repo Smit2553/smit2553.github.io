@@ -1,11 +1,12 @@
+import { MotionConfig } from "framer-motion";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import PageMetadata, { MetadataProvider } from "./components/PageMetadata";
-import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import styles from "./App.module.css";
 import { fetchSiteConfig, type SiteConfig } from "./lib/site";
 
+const HomePage = lazy(() => import("./pages/HomePage"));
 const BlogIndexPage = lazy(() => import("./pages/BlogIndexPage"));
 const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
@@ -79,16 +80,16 @@ export default function App() {
   const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
-    void fetchSiteConfig()
+    void fetchSiteConfig(controller.signal)
       .then((config) => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setSiteConfig(config);
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setSiteConfig({
             developmentWebsite: false,
             productionWebsiteUrl: "https://smit.codestacx.com",
@@ -97,45 +98,47 @@ export default function App() {
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 
   return (
-    <MetadataProvider baseUrl={siteConfig?.productionWebsiteUrl}>
-      <RouteMetadata />
-      {siteConfig?.developmentWebsite ? (
-        <div className={styles.environmentBanner} role="status">
-          <p className={styles.environmentBannerText}>
-            This is the development website. The real website is at{" "}
-            <a className={styles.environmentBannerLink} href={siteConfig.productionWebsiteUrl}>
-              {siteConfig.productionWebsiteUrl}
-            </a>
-            .
-          </p>
-        </div>
-      ) : null}
-      <Suspense
-        fallback={(
-          <main className={styles.routeFallback} aria-busy="true" aria-live="polite">
-            <p className={styles.routeFallbackText}>Loading page...</p>
-          </main>
-        )}
-      >
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/blog" element={<BlogIndexPage />} />
-          <Route path="/blog/:slug" element={<BlogPostPage />} />
-          <Route path="/admin" element={<Navigate to="/admin/posts" replace />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin/posts" element={<AdminPostsPage />} />
-          <Route path="/admin/posts/new" element={<AdminPostFormPage />} />
-          <Route path="/admin/posts/:id/edit" element={<AdminPostFormPage />} />
-          <Route path="/admin/replies" element={<AdminRepliesPage />} />
-          <Route path="/admin/*" element={<Navigate to="/admin/posts" replace />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
-    </MetadataProvider>
+    <MotionConfig reducedMotion="user">
+      <MetadataProvider baseUrl={siteConfig?.productionWebsiteUrl}>
+        <RouteMetadata />
+        {siteConfig?.developmentWebsite ? (
+          <div className={styles.environmentBanner} role="status">
+            <p className={styles.environmentBannerText}>
+              This is the development website. The real website is at{" "}
+              <a className={styles.environmentBannerLink} href={siteConfig.productionWebsiteUrl}>
+                {siteConfig.productionWebsiteUrl}
+              </a>
+              .
+            </p>
+          </div>
+        ) : null}
+        <Suspense
+          fallback={(
+            <main className={styles.routeFallback} aria-busy="true" aria-live="polite">
+              <p className={styles.routeFallbackText}>Loading page...</p>
+            </main>
+          )}
+        >
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/blog" element={<BlogIndexPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/admin" element={<Navigate to="/admin/posts" replace />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin/posts" element={<AdminPostsPage />} />
+            <Route path="/admin/posts/new" element={<AdminPostFormPage />} />
+            <Route path="/admin/posts/:id/edit" element={<AdminPostFormPage />} />
+            <Route path="/admin/replies" element={<AdminRepliesPage />} />
+            <Route path="/admin/*" element={<Navigate to="/admin/posts" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </MetadataProvider>
+    </MotionConfig>
   );
 }

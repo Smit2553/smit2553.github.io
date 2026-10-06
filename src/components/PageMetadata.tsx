@@ -38,10 +38,17 @@ function setMetaTag(selector: string, attributes: Record<string, string>, conten
 }
 
 function getAbsoluteUrl(value: string, baseUrl: string): string {
+  const base = `${baseUrl.replace(/\/$/, "")}/`;
+
   try {
-    return new URL(value, `${baseUrl.replace(/\/$/, "")}/`).toString();
+    if (value.startsWith("/")) {
+      const safePath = "/" + value.replace(/^\/+/, "");
+      return new URL(safePath, base).toString();
+    }
+
+    return new URL(value, base).toString();
   } catch {
-    return new URL(value, `${defaultSiteUrl}/`).toString();
+    return `${defaultSiteUrl}/`;
   }
 }
 
@@ -57,6 +64,7 @@ export default function PageMetadata({
 
   useEffect(() => {
     const canonicalUrl = getAbsoluteUrl(canonicalPath, baseUrl);
+    const effectiveImageUrl = imageUrl ?? (noIndex ? null : "/profilepicture.jpg");
     let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
 
     document.title = title;
@@ -79,8 +87,8 @@ export default function PageMetadata({
       imageUrl ? "summary_large_image" : "summary",
     );
 
-    if (imageUrl) {
-      const absoluteImageUrl = getAbsoluteUrl(imageUrl, baseUrl);
+    if (effectiveImageUrl) {
+      const absoluteImageUrl = getAbsoluteUrl(effectiveImageUrl, baseUrl);
       setMetaTag('meta[property="og:image"]', { property: "og:image" }, absoluteImageUrl);
       setMetaTag('meta[name="twitter:image"]', { name: "twitter:image" }, absoluteImageUrl);
     } else {

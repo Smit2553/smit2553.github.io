@@ -27,6 +27,7 @@ function installShutdownHandlers(server: Server): void {
     const forceTimer = setTimeout(() => {
       console.error("Graceful shutdown timed out; closing active connections.");
       server.closeAllConnections();
+      process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
     forceTimer.unref();
 
@@ -58,16 +59,19 @@ async function main(): Promise<void> {
   const { app } = await import("./app");
 
   const server = app.listen(PORT, () => {
+    installShutdownHandlers(server);
     console.log(`Server listening on http://localhost:${PORT}`);
   });
+
+  server.keepAliveTimeout = 5_000;
+  server.headersTimeout = 15_000;
+  server.requestTimeout = 30_000;
 
   server.on("error", (error) => {
     console.error(error);
     process.exitCode = 1;
     void closeStorage();
   });
-
-  installShutdownHandlers(server);
 }
 
 main().catch(async (error) => {
